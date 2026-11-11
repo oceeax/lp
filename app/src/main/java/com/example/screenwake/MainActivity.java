@@ -40,45 +40,43 @@ public class MainActivity extends Activity implements CommandPoller.ServerBindNo
             ui.postDelayed(this, 3000);
         }
     };
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getWindow().setStatusBarColor(COLOR_BLUE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-        }
+    // ★ 把初始化崩溃捕获加在这里，必须放在最前面
+    LogManager.initCrashHandler(getApplicationContext());
 
-        ScrollView scroll = new ScrollView(this);
-        scroll.setBackgroundColor(COLOR_BG);
-        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-
-        addHeader(root);
-
-        LinearLayout statusWrapper = new LinearLayout(this);
-        statusWrapper.setPadding(dp(20), 0, dp(20), dp(16));
-        LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        wrapLp.topMargin = -dp(24);
-        statusWrapper.setLayoutParams(wrapLp);
-        addStatusCard(statusWrapper);
-        root.addView(statusWrapper);
-
-        addGridSection(root);
-        addFooter(root);
-
-        scroll.addView(root);
-        setContentView(scroll);
-        ui.post(statusTicker);
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    // ★ 放在最顶部，这样后面只要闪退就能抓到
-        LogManager.initCrashHandler(getApplicationContext());
-    
+    getWindow().setStatusBarColor(COLOR_BLUE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
     }
+
+    ScrollView scroll = new ScrollView(this);
+    scroll.setBackgroundColor(COLOR_BG);
+    scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+
+    LinearLayout root = new LinearLayout(this);
+    root.setOrientation(LinearLayout.VERTICAL);
+
+    addHeader(root);
+
+    LinearLayout statusWrapper = new LinearLayout(this);
+    statusWrapper.setPadding(dp(20), 0, dp(20), dp(16));
+    LinearLayout.LayoutParams wrapLp = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    wrapLp.topMargin = -dp(24);
+    statusWrapper.setLayoutParams(wrapLp);
+    addStatusCard(statusWrapper);
+    root.addView(statusWrapper);
+
+    addGridSection(root);
+    addFooter(root);
+
+    scroll.addView(root);
+    setContentView(scroll);
+    ui.post(statusTicker);
+} // ★ 重点：这里必须有一个大括号闭合 onCreate 方法！
 
     private void addHeader(LinearLayout root) {
         LinearLayout header = new LinearLayout(this);
