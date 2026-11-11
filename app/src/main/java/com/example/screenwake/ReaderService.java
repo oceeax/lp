@@ -1,5 +1,4 @@
-package com.example.voicereader;
-
+package com.example.screenwake;
 import android.app.*;
 import android.content.*;
 import android.net.Uri;
