@@ -67,10 +67,9 @@
         <!-- ========= Activity 所有可见页面 ========= -->
         <!-- 设置页面 ---->
         <activity
-           android:name=".SettingActivity"
-           android:exported="false"
-           android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- 强制加这一行 -->
-
+            android:name=".SettingActivity"
+            android:exported="false"/>
+        
         <!-- 定时器页面 -->
         <activity
             android:name=".AlarmSchedulerActivity"
