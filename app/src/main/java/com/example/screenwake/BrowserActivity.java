@@ -252,12 +252,16 @@ public class BrowserActivity extends Activity {
                             DownloadManager.Request
                                     .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
                     );
-                         catch (SocketTimeoutException e){
-                         LogManager.log(ctx,"[s.java][TIMEOUT] 网络请求超时");
-                       }
-                          catch (IOException e){
-                          LogManager.log(ctx,"[s.java][NET_DOWN] 网络连接不通");
-                          }
+try {
+    // 你的网络请求、读写文件业务代码放这里
+    URL url = new URL("xxxx");
+    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+} catch (SocketTimeoutException e) {
+    LogManager.log(ctx,"[BrowserActivity.java][TIMEOUT] 网络请求超时");
+} catch (IOException e) {
+    LogManager.log(ctx,"[BrowserActivity.java][NET_DOWN] 网络连接不通");
+}
+
                     request.setDestinationInExternalPublicDir(
                             Environment.DIRECTORY_DOWNLOADS,
                             fileName
