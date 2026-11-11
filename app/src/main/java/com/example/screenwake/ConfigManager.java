@@ -3,104 +3,166 @@ package com.example.screenwake;
 import android.content.Context;
 import android.content.SharedPreferences;
 
-public class ConfigManager {
-    private static final String SP_NAME = "app_config";
+import java.util.UUID;
 
-    private static SharedPreferences sp(Context ctx) {
-        return ctx.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
+public final class ConfigManager {
+
+    public static final String MODE_WEB  = "web";
+    public static final String MODE_FILE = "file";
+
+    private static final String PREF_NAME = "ScreenWakeConfig";
+
+    private static final String KEY_SERVER_URL     = "server_url";
+    private static final String KEY_TOKEN          = "token";
+    private static final String KEY_DEVICE_ID      = "device_id";
+    private static final String KEY_ENABLED        = "alarm_enabled";
+    private static final String KEY_INTERVAL_MIN   = "interval_minutes";
+    private static final String KEY_NEXT_TRIGGER   = "next_trigger";
+    private static final String KEY_MONITOR_URL    = "monitor_url";
+    private static final String KEY_FEISHU_HOOK    = "feishu_hook";
+    private static final String KEY_SLEEP_MINUTES  = "sleep_minutes";
+    private static final String KEY_DETECT_MODE    = "detect_mode";
+    private static final String KEY_LOCAL_FILE_URI = "local_file_uri";
+    private static final String KEY_PAUSED         = "paused";
+    private static final String KEY_LAST_TRIGGER   = "last_trigger";
+
+    private ConfigManager() {}
+
+    private static SharedPreferences pref(Context ctx) {
+        return ctx.getApplicationContext()
+                .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
     }
 
-    // ================== 你原有的部分 ==================
-    private static final String KEY_TIMER_ENABLE = "timer_enable";
-    private static final String KEY_TIMER_INTERVAL_MIN = "timer_interval_min";
-    private static final String KEY_NEXT_TRIGGER = "next_trigger";
-
-    // 定时器开关
-    public static void setEnabled(Context ctx, boolean val) {
-        sp(ctx).edit().putBoolean(KEY_TIMER_ENABLE, val).apply();
+    // ================= 旧版自建服务器 =================
+    public static String getServerUrl(Context ctx) {
+        return pref(ctx).getString(KEY_SERVER_URL, "");
     }
 
+    public static void setServerUrl(Context ctx, String url) {
+        pref(ctx).edit().putString(KEY_SERVER_URL, url == null ? "" : url).apply();
+    }
+
+    public static String getToken(Context ctx) {
+        return pref(ctx).getString(KEY_TOKEN, "");
+    }
+
+    public static void setToken(Context ctx, String token) {
+        pref(ctx).edit().putString(KEY_TOKEN, token == null ? "" : token).apply();
+    }
+
+    public static String getDeviceToken(Context ctx) { return getToken(ctx); }
+    public static void setDeviceToken(Context ctx, String token) { setToken(ctx, token); }
+
+    // ================= 设备ID =================
+    public static String getDeviceId(Context ctx) {
+        SharedPreferences p = pref(ctx);
+        String id = p.getString(KEY_DEVICE_ID, "");
+        if (id == null || id.trim().isEmpty()) {
+            id = "dev-" + UUID.randomUUID().toString().replace("-", "");
+            if (id.length() > 24) id = id.substring(0, 24);
+            p.edit().putString(KEY_DEVICE_ID, id).apply();
+        }
+        return id;
+    }
+
+    public static void setDeviceId(Context ctx, String id) {
+        pref(ctx).edit().putString(KEY_DEVICE_ID, id == null ? "" : id).apply();
+    }
+
+    // ================= 定时器（AlarmScheduler） =================
     public static boolean isEnabled(Context ctx) {
-        return sp(ctx).getBoolean(KEY_TIMER_ENABLE, false);
+        return pref(ctx).getBoolean(KEY_ENABLED, false);
     }
 
-    // 定时间隔分钟
-    public static void setIntervalMinutes(Context ctx, long minute) {
-        sp(ctx).edit().putLong(KEY_TIMER_INTERVAL_MIN, minute).apply();
+    public static void setEnabled(Context ctx, boolean enabled) {
+        pref(ctx).edit().putBoolean(KEY_ENABLED, enabled).apply();
     }
+
+    public static void enable(Context ctx) { setEnabled(ctx, true); }
+    public static void disable(Context ctx) { setEnabled(ctx, false); }
 
     public static long getIntervalMinutes(Context ctx) {
-        return sp(ctx).getLong(KEY_TIMER_INTERVAL_MIN, 30L); // 默认30分钟
+        return pref(ctx).getLong(KEY_INTERVAL_MIN, 60L);
     }
 
-    // 记录下次触发时间戳
-    public static void setNextTrigger(Context ctx, long time) {
-        sp(ctx).edit().putLong(KEY_NEXT_TRIGGER, time).apply();
+    public static void setIntervalMinutes(Context ctx, long minutes) {
+        pref(ctx).edit().putLong(KEY_INTERVAL_MIN, minutes).apply();
     }
 
     public static long getNextTrigger(Context ctx) {
-        return sp(ctx).getLong(KEY_NEXT_TRIGGER, 0L);
+        return pref(ctx).getLong(KEY_NEXT_TRIGGER, 0L);
     }
 
+    public static void setNextTrigger(Context ctx, long ts) {
+        pref(ctx).edit().putLong(KEY_NEXT_TRIGGER, ts).apply();
+    }
 
-    // ================== 补充缺失的部分（解决编译报错） ==================
+    // ================= 暂停开关（CommandExecutor / BootReceiver / TaskReceiver 使用） =================
+    public static boolean isPaused(Context ctx) {
+        return pref(ctx).getBoolean(KEY_PAUSED, false);
+    }
 
-    // 1. 睡眠时长（DeviceInfo 报错缺失）
-    private static final String KEY_SLEEP_MINUTES = "sleep_minutes";
+    public static void setPaused(Context ctx, boolean paused) {
+        pref(ctx).edit().putBoolean(KEY_PAUSED, paused).apply();
+    }
+
+    // ================= 上次触发时间（TaskReceiver 使用） =================
+    public static long getLastTrigger(Context ctx) {
+        return pref(ctx).getLong(KEY_LAST_TRIGGER, 0L);
+    }
+
+    public static void setLastTrigger(Context ctx, long ts) {
+        pref(ctx).edit().putLong(KEY_LAST_TRIGGER, ts).apply();
+    }
+
+    // ================= 监控网页 =================
+    public static String getMonitorUrl(Context ctx) {
+        return pref(ctx).getString(KEY_MONITOR_URL, "");
+    }
+
+    public static void setMonitorUrl(Context ctx, String url) {
+        pref(ctx).edit().putString(KEY_MONITOR_URL, url == null ? "" : url).apply();
+    }
+
+    // ================= 飞书Webhook =================
+    public static String getFeishuWebhook(Context ctx) {
+        return pref(ctx).getString(KEY_FEISHU_HOOK, "");
+    }
+
+    public static void setFeishuWebhook(Context ctx, String hook) {
+        pref(ctx).edit().putString(KEY_FEISHU_HOOK, hook == null ? "" : hook).apply();
+    }
+
+    // ================= 休眠时长 =================
+    public static int getSleepMinutes(Context ctx) {
+        return pref(ctx).getInt(KEY_SLEEP_MINUTES, 60);
+    }
 
     public static void setSleepMinutes(Context ctx, int minutes) {
-        sp(ctx).edit().putInt(KEY_SLEEP_MINUTES, minutes).apply();
+        if (minutes < 1) minutes = 1;
+        if (minutes > 1440) minutes = 1440;
+        pref(ctx).edit().putInt(KEY_SLEEP_MINUTES, minutes).apply();
     }
 
-    public static int getSleepMinutes(Context ctx) {
-        // 默认睡眠时间，比如 5 分钟，看你的业务逻辑需求
-        return sp(ctx).getInt(KEY_SLEEP_MINUTES, 5);
+    // ================= 检测模式：web / file =================
+    public static String getDetectMode(Context ctx) {
+        String m = pref(ctx).getString(KEY_DETECT_MODE, MODE_WEB);
+        if (m == null || m.trim().isEmpty()) m = MODE_WEB;
+        return m;
     }
 
-    // 2. 设备 ID（DeviceInfo 报错缺失）
-    private static final String KEY_DEVICE_ID = "device_id";
-
-    public static void setDeviceId(Context ctx, String deviceId) {
-        sp(ctx).edit().putString(KEY_DEVICE_ID, deviceId).apply();
+    public static void setDetectMode(Context ctx, String mode) {
+        if (!MODE_FILE.equals(mode)) mode = MODE_WEB;
+        pref(ctx).edit().putString(KEY_DETECT_MODE, mode).apply();
     }
 
-    public static String getDeviceId(Context ctx) {
-        // 如果代码里其他地方没有生成并保存过，这里默认返回空字符串或 "unknown"
-        return sp(ctx).getString(KEY_DEVICE_ID, "unknown_device_id");
+    // ================= 本地文本文件URI（SAF持久化） =================
+    public static String getLocalFileUri(Context ctx) {
+        return pref(ctx).getString(KEY_LOCAL_FILE_URI, "");
     }
 
-    // 3. 暂停状态（BootReceiver, TaskReceiver 报错缺失）
-    private static final String KEY_IS_PAUSED = "is_paused";
-
-    public static void setPaused(Context ctx, boolean isPaused) {
-        sp(ctx).edit().putBoolean(KEY_IS_PAUSED, isPaused).apply();
-    }
-
-    public static boolean isPaused(Context ctx) {
-        return sp(ctx).getBoolean(KEY_IS_PAUSED, false);
-    }
-
-    // 4. 最后一次触发时间（TaskReceiver 报错缺失）
-    private static final String KEY_LAST_TRIGGER = "last_trigger";
-
-    public static void setLastTrigger(Context ctx, long time) {
-        sp(ctx).edit().putLong(KEY_LAST_TRIGGER, time).apply();
-    }
-
-    public static long getLastTrigger(Context ctx) {
-        return sp(ctx).getLong(KEY_LAST_TRIGGER, 0L);
-    }
-
-    // 5. 飞书 Webhook（DeviceUploader 报错缺失）
-    private static final String KEY_FEISHU_WEBHOOK = "feishu_webhook";
-
-    public static void setFeishuWebhook(Context ctx, String url) {
-        sp(ctx).edit().putString(KEY_FEISHU_WEBHOOK, url).apply();
-    }
-
-    public static String getFeishuWebhook(Context ctx) {
-        // 默认空字符串
-        return sp(ctx).getString(KEY_FEISHU_WEBHOOK, "");
+    public static void setLocalFileUri(Context ctx, String uri) {
+        pref(ctx).edit().putString(KEY_LOCAL_FILE_URI, uri == null ? "" : uri).apply();
     }
 }
 
