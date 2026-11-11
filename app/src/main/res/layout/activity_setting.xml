@@ -1,21 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:fillViewport="true"
+    android:background="#F5F5F5">
 
-    <TextView
-        android:id="@+id/tv_camera_status"
-        android:text="相机权限：未检测"
-        android:textSize="16sp"
-        android:padding="12dp"
+    <!-- 根布局，注意这个 ID 很重要，如果你动态代码要往里加东西，可以找这个 ID -->
+    <LinearLayout
+        android:id="@+id/ll_setting_root"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
 
-    <Button
-        android:id="@+id/btn_camera"
-        android:text="申请相机权限"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        <!-- 标题 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="基础权限设置"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="16dp"/>
 
-</LinearLayout>
+        <!-- 相机权限区域 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="#FFFFFF"
+            android:padding="16dp"
+            android:layout_marginBottom="20dp"
+            android:elevation="2dp">
+
+            <!-- 这是你 Java 代码里 findViewById(R.id.tv_camera_status) 要找的 TextView -->
+            <TextView
+                android:id="@+id/tv_camera_status"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="❌相机权限：未授权"
+                android:textSize="16sp"
+                android:textColor="#333333" />
+
+            <!-- 这是你 Java 代码里 findViewById(R.id.btn_camera) 要找的 Button -->
+            <Button
+                android:id="@+id/btn_camera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="申请相机"
+                android:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+
+        <!-- 分隔线 -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#DDDDDD"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- ★★★ 这里是关键 ★★★ -->
+        <!-- 为了接收你在 Java 里动态生成的悬浮窗/电池/通知等按钮，
+             你需要把 SettingActivity.java 里的动态代码加上来。
+             如果你不修改 Java 代码，动态生成的控件会跑到屏幕外面去。
+             所以推荐在 Java 的 buildPage() 里，把控件添加到这个 LinearLayout 中 -->
+        <LinearLayout
+            android:id="@+id/ll_dynamic_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+    </LinearLayout>
+</ScrollView>
+
+
