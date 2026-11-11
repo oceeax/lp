@@ -37,7 +37,7 @@ public class SettingActivity extends AppCompatActivity {
         
         // 彻底抛弃 XML，全部代码动态生成 UI
         initUI();
-
+LogManager.log(SettingActivity.java,"[MainActivity.java][CRASH] 程序发生崩溃");
         // 检查权限并刷新状态
         refreshCameraStatus();
         refreshStatus();
@@ -158,7 +158,7 @@ public class SettingActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-
+LogManager.log(SettingActivity.this,"[SettingActivity.java][INFO] 跳相机权限");
         if (requestCode == REQ_CAMERA) {
             refreshCameraStatus();
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -171,6 +171,7 @@ public class SettingActivity extends AppCompatActivity {
         } else if (requestCode == REQ_NOTIFICATION) {
             refreshStatus();
         }
+        
     }
 
     private void requestNotificationPermissionIfNeeded() {
@@ -226,6 +227,7 @@ public class SettingActivity extends AppCompatActivity {
         } else {
             openAppDetails();
         }
+        LogManager.log(SettingActivity.java,"[MainActivity.this][CRASH] 程序发生崩溃");
     }
 
     private void openBattery() {
@@ -262,6 +264,7 @@ public class SettingActivity extends AppCompatActivity {
         } catch (Exception e) {
             Toast.makeText(this, "启动失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
+        LogManager.log(SettingActivity.this,"[SettingActivity.java][INFO] 跳启动权限");
     }
 
     private int dp(int value) {
