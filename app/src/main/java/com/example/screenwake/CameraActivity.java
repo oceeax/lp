@@ -201,7 +201,12 @@ public class CameraActivity extends AppCompatActivity {
                 takePhoto();
             }
         });
+        // 拍照成功时：
+        LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "拍照成功，文件已保存至相册");
 
+        // 录像开始/结束时：
+        LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "开始录制视频...");
+        LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "停止录像并保存成功");
         btnSwitch = makeButton("切换");
         btnSwitch.setOnClickListener(v -> switchCamera());
 
@@ -425,7 +430,12 @@ public class CameraActivity extends AppCompatActivity {
         btnFlash.setEnabled(hasFlash);
         btnFlash.setText(hasFlash ? "闪光灯" : "无闪光灯");
     }
+    // 拍照成功时：
+    LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "拍照成功，文件已保存至相册");
 
+// 录像开始/结束时：
+    LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "开始录制视频...");
+    LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "停止录像并保存成功");
     private void toggleFlash() {
         if (camera == null || !camera.getCameraInfo().hasFlashUnit()) return;
         isFlashOn = !isFlashOn;
