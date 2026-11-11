@@ -2,42 +2,42 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <!-- 蓝牙 -->
-    <uses-permission android:name="android.permission.BLUETOOTH"/>
-    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 
     <!-- 开机启动 -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <!-- 亮屏 -->
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- 亮屏唤醒 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- 前台服务 -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!-- 通知 -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- 悬浮窗、修改系统设置、电池白名单 -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
-    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <!-- 媒体读取（图片/视频/音频） -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <!-- 低版本存储权限 -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 
     <application
         android:allowBackup="false"
@@ -56,26 +56,41 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Activity 所有页面 -->
+        <!-- ========= Activity 所有可见页面 ========= -->
+        <!-- 设置页面 -->
         <activity
-            android:name=".SettingsPage"
+            android:name=".SettingsActivity"
             android:exported="false" />
+
+        <!-- 定时器页面 -->
+        <activity
+            android:name=".AlarmSchedulerActivity"
+            android:exported="false" />
+
+        <!-- 数据上传页面 -->
+        <activity
+            android:name=".DeviceUploader"
+            android:exported="false" />
+
+        <!-- 语音播报页面 -->
+        <activity
+            android:name=".VoiceReader"
+            android:exported="false" />
+
         <activity
             android:name=".MultiWsActivity"
             android:exported="false"
             android:label="五路接收" />
         <activity android:name=".LogManager" android:exported="false" />
         <activity android:name=".WebMonitor" android:exported="false" />
-        <activity android:name=".AlarmScheduler" android:exported="false" />
-        <activity android:name=".DeviceUploader" android:exported="false" />
 
-        <!-- 主界面 -->
+        <!-- 主界面【唯一桌面图标入口】 -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
@@ -83,17 +98,18 @@
         <activity
             android:name=".BrowserActivity"
             android:exported="false"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"/>
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
 
-        <!-- 新增：图片查看、视频播放页面 -->
+        <!-- 图片查看、视频播放页面 -->
         <activity
             android:name=".ImageShowActivity"
-            android:exported="false"/>
+            android:exported="false" />
         <activity
             android:name=".VideoPlayActivity"
             android:exported="false"
-            android:configChanges="orientation|screenSize"/>
+            android:configChanges="orientation|screenSize" />
 
+        <!-- ========= Service 后台服务（无界面） ========= -->
         <!-- 无障碍点击服务 -->
         <service
             android:name=".AppClickAccessService"
@@ -107,42 +123,12 @@
         <!-- 悬浮窗服务 -->
         <service
             android:name=".FloatWindowService"
-            android:exported="false"/>
+            android:exported="false" />
 
-        <!-- 语音朗读服务 -->
-        <service
-            android:name=".VoicerRader"
-            android:exported="false"/>
-
-        <!-- 朗读服务 -->
+        <!-- 语音播报后台子服务，被VoiceReader页面调用 -->
         <service
             android:name=".ReaderService"
-            android:exported="false"/>
-
-        <!-- 日志管理（注意：这是Activity页面，不是Service！） -->
-        <activity
-            android:name=".LogManagerActivity"
-            android:exported="false"/>
-
-        <!-- 开机广播接收器 -->
-        <receiver
-            android:name=".BootReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-        </receiver>
-
-        <!-- 定时任务广播 -->
-        <receiver
-            android:name=".TaskReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.example.screenwake.ACTION_TIMER"/>
-            </intent-filter>
-        </receiver>
+            android:exported="false" />
 
         <!-- 保持屏幕唤醒前台服务 -->
         <service
@@ -152,7 +138,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Brief post‑boot screen wake attempt and visible five‑minute display"/>
+                android:value="Brief post‑boot screen wake attempt and visible five‑minute display" />
         </service>
 
         <!-- 循环任务前台服务 -->
@@ -160,7 +146,28 @@
             android:name=".CycleService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync"/>
+            android:foregroundServiceType="dataSync" />
+
+        <!-- ========= Receiver 广播接收器 ========= -->
+        <!-- 开机广播：负责开机完成后做亮屏唤醒逻辑 BootReceiver.java -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- 定时任务广播接收器 -->
+        <receiver
+            android:name=".TaskReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.screenwake.ACTION_TIMER" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>
