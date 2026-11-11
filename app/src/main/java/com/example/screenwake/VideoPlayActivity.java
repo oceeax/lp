@@ -1,5 +1,5 @@
 package com.example.screenwake;
-
+import com.example.screenwake.R;
 import android.net.Uri;
 import android.os.Bundle;
 import android.widget.VideoView;
