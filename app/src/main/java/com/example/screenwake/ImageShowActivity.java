@@ -1,5 +1,5 @@
 package com.example.screenwake;
-
+import com.example.screenwake.R;
 import android.os.Bundle;
 import android.widget.ImageView;
 import androidx.appcompat.app.AppCompatActivity;
