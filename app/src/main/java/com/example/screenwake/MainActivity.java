@@ -150,7 +150,7 @@ public class MainActivity extends Activity implements CommandPoller.ServerBindNo
         addGridRow(section,
                 new GridItem("日志查看", "📝", 6, LogManagerActivity.class),
                 new GridItem("数据上传", "☁️", 7, DeviceUploader.class),
-                new GridItem("设置权限", "⚙️", 8, SettingActivity.class)
+                new GridItem("设置权限", "⚙️", 8, SettingsActivity.class)
         );
          
         root.addView(section);
