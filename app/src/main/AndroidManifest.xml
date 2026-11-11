@@ -117,7 +117,7 @@
 
         <!-- 定时-->
         <activity
-            android:name=".AlarmSchedulerActivity"
+            android:name=".WhiteListUtil"
             android:exported="false" />
         <!-- 日志  -->
         <activity
@@ -127,7 +127,7 @@
             android:name=".BootReceiver"
             android:exported="false" />
         <activity
-            android:name=".SettingsActivity"
+            android:name=".CommandPoller"
             android:exported="false"
             android:configChanges="orientation|screenSize" />
         <activity
