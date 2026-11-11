@@ -65,10 +65,11 @@
         </provider>
 
         <!-- ========= Activity 所有可见页面 ========= -->
-        <!-- 设置页面 -->
+        <!-- 设置页面 ---->
         <activity
-            android:name=".SettingActivity"
-            android:exported="false" />
+           android:name=".SettingActivity"
+           android:exported="false"
+           android:theme="@style/Theme.AppCompat.Light.NoActionBar" /> <!-- 强制加这一行 -->
 
         <!-- 定时器页面 -->
         <activity
