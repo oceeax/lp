@@ -139,11 +139,11 @@ public class MainActivity extends Activity implements CommandPoller.ServerBindNo
         // 纯页面跳转
         addGridRow(section,
                 new GridItem("文件接收", "💬", 0, MultiWsActivity.class),
-                new GridItem("亮屏测试", "📱", 1, PatternActivity.class),
+                new GridItem("亮屏测试", "📱", 1, BootReceiver.class),
                 new GridItem("内置浏览器", "🌐", 2, BrowserActivity.class)
         );
         addGridRow(section,
-                new GridItem("相机功能", "⚡", 3, ScreenWakeService.class),
+                new GridItem("相机功能", "⚡", 3, CameraActivity.class),
                 new GridItem("语音播报", "🍦", 4, VoiceReader.class),
                 new GridItem("定时任务", "⏰", 5, AlarmScheduler.class)
         );
