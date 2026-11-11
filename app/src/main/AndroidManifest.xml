@@ -41,7 +41,7 @@
 
     <application
         android:allowBackup="false"
-        android:label="接收器"
+        android:label="午夜星"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="true">
 
@@ -108,7 +108,7 @@
             android:name=".FloatWindowService"
             android:exported="false"/>
         <service
-            android:name=".Voicereader"
+            android:name=".VoicerRader"
             android:exported="false"/>
         <service
             android:name=".WebMonitorActivity"
