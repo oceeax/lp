@@ -256,19 +256,23 @@ public class BrowserActivity extends Activity {
                                     .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
                     );
          String address = "https://www.baidu.com";
-try {
-    URL url = new URL(address);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.setConnectTimeout(8000);
-    conn.setReadTimeout(10000);
-    int code = conn.getResponseCode();
-    LogManager.log(BrowserActivity.this,"[BrowserActivity.java][INFO] 访问"+address+"，响应码:"+code);
-} catch (SocketTimeoutException e) {
-    LogManager.log(BrowserActivity.this,"[BrowserActivity.java][TIMEOUT] 访问"+address+" 请求超时");
-} catch (IOException e) {
-    LogManager.log(BrowserActivity.this,"[BrowserActivity.java][NET_DOWN] 访问"+address+" 网络不通");
-}
-                     
+new Thread(() -> {
+    String address = "https://www.baidu.com";
+    try {
+        URL url = new URL(address);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setConnectTimeout(8000);
+        conn.setReadTimeout(10000);
+        int code = conn.getResponseCode();
+        LogManager.log(BrowserActivity.this,"[BrowserActivity.java][NET‑TEST]访问"+address+" 返回码:"+code);
+        conn.disconnect();
+    } catch (SocketTimeoutException e) {
+        LogManager.log(BrowserActivity.this,"[BrowserActivity.java][TIMEOUT]访问"+address+" 请求超时");
+    } catch (IOException e) {
+        LogManager.log(BrowserActivity.this,"[BrowserActivity.java][NET_DOWN]访问"+address+" 网络不通");
+    }
+}).start();
+
                     request.setDestinationInExternalPublicDir(
                             Environment.DIRECTORY_DOWNLOADS,
                             fileName
