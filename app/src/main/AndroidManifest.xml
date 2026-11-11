@@ -47,7 +47,10 @@
           android:name=".MultiWsActivity"
           android:exported="false"
           android:label="五路接收" />
-
+        <activity android:name=".LogManager" android:exported="false" />
+        <activity android:name=".WebMonitor" android:exported="false" />
+        <activity android:name=".AlarmScheduler" android:exported="false" />
+        <activity android:name=".DeviceUploader" android:exported="false" />
         <!-- 主界面 -->
         <activity
             android:name=".MainActivity"
