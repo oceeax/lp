@@ -99,6 +99,7 @@
             android:name=".CameraActivity"
             android:exported="false"
             android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"
             android:configChanges="orientation|screenSize|keyboardHidden" />
 
         <!-- 主界面【唯一桌面图标入口】 -->
