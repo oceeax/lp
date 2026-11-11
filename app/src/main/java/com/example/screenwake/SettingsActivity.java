@@ -1,20 +1,85 @@
 package com.example.screenwake;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.PowerManager;
 import android.provider.Settings;
-import android.view.Gravity;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
+public class SettingActivity extends AppCompatActivity {
+    private static final int REQ_CAMERA = 1002;
+    private TextView tvCameraStatus;
+    private Button btnCamera;
+
+public class SettingActivity extends AppCompatActivity {
+    private static final int REQ_CAMERA = 1002;
+    private TextView tvCameraStatus;
+    private Button btnCamera;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.你的设置布局文件名);
+
+        tvCameraStatus = findViewById(R.id.tv_camera_status);
+        btnCamera = findViewById(R.id.btn_camera);
+
+        // 打开页面立刻刷新相机权限状态
+        refreshCameraStatus();
+
+        // 申请相机按钮点击事件
+        btnCamera.setOnClickListener(v -> {
+            int hasCam = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+            if (hasCam == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "✅已有相机权限", Toast.LENGTH_SHORT).show();
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.CAMERA}, REQ_CAMERA);
+            }
+        });
+    }
+
+    // 刷新相机权限状态
+    private void refreshCameraStatus() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED) {
+            tvCameraStatus.setText("✅相机权限：已授权");
+        } else {
+            tvCameraStatus.setText("❌相机权限：未授权");
+        }
+    }
+
+
+    // 权限回调，授权/拒绝之后自动刷新状态文字
+    @Override
+    public void onRequestPermissionsResult(int code, @NonNull String[] perms, @NonNull int[] res) {
+        super.onRequestPermissionsResult(code, perms, res);
+        if (code == REQ_CAMERA) {
+            refreshCameraStatus();
+            if (res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "✅相机授权成功", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "❌相机权限被拒绝", Toast.LENGTH_SHORT).show();
+                // 用户勾选不再询问，跳转系统设置
+                boolean noAsk = !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA);
+                if (noAsk) {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    intent.setData(Uri.parse("package:" + getPackageName()));
+                    startActivity(intent);
+                }
+            }
+        }
+    }
+}
 public class SettingsActivity extends Activity {
     private LinearLayout root;
     private TextView status;
