@@ -257,3 +257,11 @@ public class MainActivity extends Activity implements CommandPoller.ServerBindNo
     }
     private int dp(float v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
 }
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    // ★ 放在最顶部，这样后面只要闪退就能抓到
+    LogManager.initCrashHandler(getApplicationContext());
+    // ...
+}
+
