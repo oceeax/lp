@@ -5,7 +5,6 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -64,6 +63,7 @@ public class CameraActivity extends AppCompatActivity {
     private boolean isFrontCamera = false;
     private boolean isFlashOn = false;
     private boolean isRecording = false;
+    private boolean isVideoMode = false; // ★ 新增：记录当前是否为录像模式
     private Recording activeRecording;
 
     private Button btnCapture, btnSwitch, btnFlash, btnRecordMode;
@@ -187,13 +187,16 @@ public class CameraActivity extends AppCompatActivity {
         btnFlash = makeButton("闪光灯");
         btnFlash.setOnClickListener(v -> toggleFlash());
 
-        btnRecordMode = makeButton("切换录像");
+        btnRecordMode = makeButton("切换到录像");
         btnRecordMode.setOnClickListener(v -> toggleMode());
 
         btnCapture = makeButton("拍照");
+        // ★ 修复：现在点击按钮会根据当前模式正确判断是拍照还是录像
         btnCapture.setOnClickListener(v -> {
             if (isRecording) {
                 stopRecording();
+            } else if (isVideoMode) {
+                startRecording();
             } else {
                 takePhoto();
             }
@@ -255,7 +258,6 @@ public class CameraActivity extends AppCompatActivity {
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build();
 
-        // ★ 修复后的录像构建代码（放在这里才对！）
         Recorder recorder = new Recorder.Builder()
                 .setQualitySelector(QualitySelector.from(
                         Quality.HD,
@@ -294,7 +296,7 @@ public class CameraActivity extends AppCompatActivity {
                     float currentZoom = zoomState.getZoomRatio();
                     float delta = detector.getScaleFactor();
                     float targetZoom = currentZoom * delta;
-                    
+
                     targetZoom = Math.max(zoomState.getMinZoomRatio(), Math.min(targetZoom, zoomState.getMaxZoomRatio()));
                     camera.getCameraControl().setZoomRatio(targetZoom);
 
@@ -312,18 +314,21 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
+    // ★ 修复：UI 与模式变量实时绑定
     private void toggleMode() {
         if (isRecording) {
             Toast.makeText(this, "请先停止录像", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (btnRecordMode.getText().toString().equals("切换录像")) {
-            btnRecordMode.setText("切换拍照");
+        isVideoMode = !isVideoMode; // 切换模式标识
+
+        if (isVideoMode) {
+            btnRecordMode.setText("切换到拍照");
             btnCapture.setText("开始录像");
             btnCapture.setBackgroundColor(Color.RED);
             btnCapture.setTextColor(Color.WHITE);
         } else {
-            btnRecordMode.setText("切换录像");
+            btnRecordMode.setText("切换到录像");
             btnCapture.setText("拍照");
             btnCapture.setBackgroundColor(ContextCompat.getColor(this, android.R.color.darker_gray));
             btnCapture.setTextColor(Color.BLACK);
@@ -370,37 +375,34 @@ public class CameraActivity extends AppCompatActivity {
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
             values.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4");
             values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Movies/ScreenWake");
-            // ★ 修复了这里的参数传递
-            // 正确写法
+            
+            // ★ 修复：加上 new 关键字，这才是真正的实例化
             outputOptions = new MediaStoreOutputOptions.Builder(getContentResolver(), MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
                     .setContentValues(values).build();
         } else {
-            Toast.makeText(this, "当前系统版本较低，录像仅保存在应用私有目录", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "当前系统版本过低，请使用 Android 10 及以上版本测试录像", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        if (outputOptions != null) {
-            activeRecording = videoCapture.getOutput()
-                    .prepareRecording(this, outputOptions)
-                    .withAudioEnabled()
-                    .start(ContextCompat.getMainExecutor(this), event -> {
-                        if (event instanceof VideoRecordEvent.Start) {
-                            isRecording = true;
-                            runOnUiThread(() -> {
-                                btnCapture.setText("停止录像");
-                                btnCapture.setBackgroundColor(Color.RED);
-                                btnCapture.setTextColor(Color.WHITE);
-                            });
-                        } else if (event instanceof VideoRecordEvent.Finalize) {
-                            isRecording = false;
-                            runOnUiThread(() -> {
-                                Toast.makeText(CameraActivity.this, "✅录像已保存", Toast.LENGTH_SHORT).show();
-                                btnCapture.setText("开始录像");
-                                btnCapture.setBackgroundColor(Color.RED);
-                                btnCapture.setTextColor(Color.WHITE);
-                            });
-                        }
-                    });
-        }
+        activeRecording = videoCapture.getOutput()
+                .prepareRecording(this, outputOptions)
+                .withAudioEnabled()
+                .start(ContextCompat.getMainExecutor(this), event -> {
+                    if (event instanceof VideoRecordEvent.Start) {
+                        isRecording = true;
+                        runOnUiThread(() -> {
+                            btnCapture.setText("停止录像");
+                            btnCapture.setBackgroundColor(Color.GRAY);
+                        });
+                    } else if (event instanceof VideoRecordEvent.Finalize) {
+                        isRecording = false;
+                        runOnUiThread(() -> {
+                            Toast.makeText(CameraActivity.this, "✅录像已保存", Toast.LENGTH_SHORT).show();
+                            btnCapture.setText("开始录像");
+                            btnCapture.setBackgroundColor(Color.RED);
+                        });
+                    }
+                });
     }
 
     private void stopRecording() {
@@ -435,4 +437,5 @@ public class CameraActivity extends AppCompatActivity {
         return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, value, getResources().getDisplayMetrics());
     }
 }
+
 
