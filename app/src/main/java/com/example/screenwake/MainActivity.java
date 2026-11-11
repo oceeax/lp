@@ -144,14 +144,15 @@ public class MainActivity extends Activity implements CommandPoller.ServerBindNo
         );
         addGridRow(section,
                 new GridItem("唤醒功能", "⚡", 3, ScreenWakeService.class),
-                new GridItem("状态检测", "📊", 4, WebMonitor.class),
+                new GridItem("语音播报", "🍦", 4, VoiceReader.class),
                 new GridItem("定时任务", "⏰", 5, AlarmScheduler.class)
         );
         addGridRow(section,
-                new GridItem("日志查看", "📝", 6, LogManager.class),
+                new GridItem("日志查看", "📝", 6, null),
                 new GridItem("数据上传", "☁️", 7, DeviceUploader.class),
-                new GridItem("设置权限", "⚙️", 8, SettingsPage.class)
+                new GridItem("设置权限", "⚙️", 8, SettingActivity.class)
         );
+         
         root.addView(section);
     }
 
@@ -256,5 +257,3 @@ public class MainActivity extends Activity implements CommandPoller.ServerBindNo
     }
     private int dp(float v) { return (int) (v * getResources().getDisplayMetrics().density + 0.5f); }
 }
-
-
