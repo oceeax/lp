@@ -32,7 +32,8 @@ public final class LogManager {
     public static final String SUB_NETWORK = "network/";   // 网络请求/WebSocket
     public static final String SUB_TIMER = "timer/";       // 定时器/闹钟
     public static final String SUB_CRASH = "crash/";       // 崩溃闪退日志
-
+    public static final String SUB_SETTING = "setting/"; // 系统设置操作
+    
     // ========= 日志级别标签 =========
     public static final String LV_DEBUG = "DEBUG";
     public static final String LV_INFO  = "INFO";
