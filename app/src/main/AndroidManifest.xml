@@ -67,7 +67,7 @@
         <!-- ========= Activity 所有可见页面 ========= -->
         <!-- 设置页面 -->
         <activity
-            android:name=".SettingsActivity"
+            android:name=".SettingActivity"
             android:exported="false" />
 
         <!-- 定时器页面 -->
