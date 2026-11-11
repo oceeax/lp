@@ -403,15 +403,15 @@ public class VoiceReader extends Activity {
                 LogManager.i(this, LogManager.SUB_APP, "系统当前默认 TTS 引擎: " + engine);
 
                 // 打印所有安装的引擎
-                if (Build.VERSION.SDK_INT >= 21) {
-                    Set<TextToSpeech.EngineInfo> engines = tts.getEngines();
-                    if (engines != null) {
-                        LogManager.i(this, LogManager.SUB_APP, "手机内检测到 TTS 引擎数量: " + engines.size());
-                        for (TextToSpeech.EngineInfo info : engines) {
-                            LogManager.i(this, LogManager.SUB_APP, "  -> 发现引擎: " + info.name + " (Label: " + info.label + ")");
-                        }
-                    }
-                }
+            if (Build.VERSION.SDK_INT >= 21) {
+    List<TextToSpeech.EngineInfo> engines = tts.getEngines(); 
+    if (engines != null) {
+        LogManager.i(this, LogManager.SUB_APP, "手机内检测到 TTS 引擎数量: " + engines.size());
+        for (TextToSpeech.EngineInfo info : engines) {
+            LogManager.i(this, LogManager.SUB_APP, "  -> 发现引擎: " + info.name + " (Label: " + info.label + ")");
+        }
+         }
+               }
 
                 engineInfo.setText("本机语音引擎：" + (engine == null ? "系统默认" : engine));
 
