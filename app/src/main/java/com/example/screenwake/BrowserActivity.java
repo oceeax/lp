@@ -2,6 +2,11 @@ package com.example.screenwake;
 
 import android.app.Activity;
 import android.app.DownloadManager;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.URL;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -255,26 +260,20 @@ public class BrowserActivity extends Activity {
                             DownloadManager.Request
                                     .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
                     );
-        
-new Thread(() -> {
-    String address = "https://www.baidu.com";
-    try {
-    
-        // 不用单独写address，直接用下载本身的url
-URL testUrl = new URL(url);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setConnectTimeout(8000);
-        conn.setReadTimeout(10000);
-        int code = conn.getResponseCode();
-        LogManager.log(BrowserActivity.this,"[BrowserActivity.java][NET‑TEST]访问"+address+" 返回码:"+code);
-        conn.disconnect();
-    } catch (SocketTimeoutException e) {
-        LogManager.log(BrowserActivity.this,"[BrowserActivity.java][TIMEOUT]访问"+address+" 请求超时");
-    } catch (IOException e) {
-        LogManager.log(BrowserActivity.this,"[BrowserActivity.java][NET_DOWN]访问"+address+" 网络不通");
-    }
-}).start();
-
+try {
+    // 将变量名改为 testUrl，避免与外层 String url 冲突，并补全协议与引号
+    URL testUrl = new URL("https://www.163.com");
+    HttpURLConnection conn = (HttpURLConnection) testUrl.openConnection();
+    conn.setConnectTimeout(8000);
+    conn.setReadTimeout(10000);
+    int code = conn.getResponseCode();
+    LogManager.log(BrowserActivity.this, "[BrowserActivity.java][NET-TEST]访问" + address + " 返回码:" + code);
+    conn.disconnect();
+} catch (SocketTimeoutException e) {
+    LogManager.log(BrowserActivity.this, "[BrowserActivity.java][TIMEOUT]访问" + address + " 请求超时");
+} catch (IOException e) {
+    LogManager.log(BrowserActivity.this, "[BrowserActivity.java][NET_DOWN]访问" + address + " 网络不通");
+}
                     request.setDestinationInExternalPublicDir(
                             Environment.DIRECTORY_DOWNLOADS,
                             fileName
