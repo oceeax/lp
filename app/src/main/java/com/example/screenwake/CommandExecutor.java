@@ -134,7 +134,7 @@ public final class CommandExecutor {
             String commandId,
             Callback callback) {
 
-        String logs = LogManager.read(c);
+        String logs = LogManager.read(c, LogManager.SUB_COMMAND);
 
         if (logs == null || logs.isEmpty()) {
             logs = "暂无日志";
