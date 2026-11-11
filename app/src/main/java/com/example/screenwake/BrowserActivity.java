@@ -25,6 +25,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.URLUtil;
 import android.widget.Button;
+import java.net.URL;
+import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
+import java.io.IOException;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -252,16 +256,20 @@ public class BrowserActivity extends Activity {
                             DownloadManager.Request
                                     .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
                     );
+         String address = "https://www.baidu.com";
 try {
-    // 你的网络请求、读写文件业务代码放这里
-    URL url = new URL("xxxx");
-    HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+    URL url = new URL(address);
+    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+    conn.setConnectTimeout(8000);
+    conn.setReadTimeout(10000);
+    int code = conn.getResponseCode();
+    LogManager.log(BrowserActivity.this,"[BrowserActivity.java][INFO] 访问"+address+"，响应码:"+code);
 } catch (SocketTimeoutException e) {
-    LogManager.log(ctx,"[BrowserActivity.java][TIMEOUT] 网络请求超时");
+    LogManager.log(BrowserActivity.this,"[BrowserActivity.java][TIMEOUT] 访问"+address+" 请求超时");
 } catch (IOException e) {
-    LogManager.log(ctx,"[BrowserActivity.java][NET_DOWN] 网络连接不通");
+    LogManager.log(BrowserActivity.this,"[BrowserActivity.java][NET_DOWN] 访问"+address+" 网络不通");
 }
-
+                     
                     request.setDestinationInExternalPublicDir(
                             Environment.DIRECTORY_DOWNLOADS,
                             fileName
