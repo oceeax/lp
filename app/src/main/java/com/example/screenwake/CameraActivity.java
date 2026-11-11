@@ -422,6 +422,7 @@ public class CameraActivity extends AppCompatActivity {
         isFrontCamera = !isFrontCamera;
         isFlashOn = false;
         bindUseCases();
+        previewView.postDelayed(this::bindUseCases, 300);
     }
 
     private void updateFlashButton() {
