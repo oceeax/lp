@@ -37,7 +37,7 @@ public class SettingActivity extends AppCompatActivity {
         
         // 彻底抛弃 XML，全部代码动态生成 UI
         initUI();
-LogManager.log(SettingActivity.java,"[MainActivity.java][CRASH] 程序发生崩溃");
+LogManager.log(SettingActivity.this,"[MainActivity.java][CRASH] 程序发生崩溃");
         // 检查权限并刷新状态
         refreshCameraStatus();
         refreshStatus();
@@ -227,7 +227,7 @@ LogManager.log(SettingActivity.this,"[SettingActivity.java][INFO] 跳相机权�
         } else {
             openAppDetails();
         }
-        LogManager.log(SettingActivity.java,"[MainActivity.this][CRASH] 程序发生崩溃");
+        LogManager.log(SettingActivity.this,"[MainActivity.this][CRASH] 程序发生崩溃");
     }
 
     private void openBattery() {
