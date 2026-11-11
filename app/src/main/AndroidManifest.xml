@@ -91,17 +91,14 @@
             android:name=".VideoPlayActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize"/>
-
-        <!-- 无障碍服务（远程点击本App按钮） -->
+ 
         <service
-            android:name=".AppClickAccessService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice.AccessibilityService"
-                android:resource="@xml/accessibility_config" />
+           android:name=".AppClickAccessService"
+             android:exported="false"
+               android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+        <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService" />
+          </intent-filter>
         </service>
 
         <!-- 悬浮窗服务 -->
