@@ -2,6 +2,7 @@ package com.example.screenwake;
 import android.content.Intent;
 import android.os.IBinder;
 import android.app.Service;
+import com.example.screenwake.R;
 import android.content.Context;
 import android.graphics.PixelFormat;
 import android.os.IBinder;
