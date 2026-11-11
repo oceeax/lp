@@ -90,7 +90,7 @@ public class CameraActivity extends AppCompatActivity {
             Toast.makeText(this, "初始化失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             finish();
         }
-        LogManager.i(this, LogManager.SUB_CAMERA, "相机页面已打开
+        LogManager.i(this, LogManager.SUB_CAMERA, "相机页面已打开");
     }
 
     @Override
@@ -102,7 +102,7 @@ public class CameraActivity extends AppCompatActivity {
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
         }
-        LogManager.i(this, LogManager.SUB_CAMERA, "相机页面关闭
+        LogManager.i(this, LogManager.SUB_CAMERA, "相机页面关闭");
     }
 
     private String[] neededPermissions() {
@@ -136,6 +136,7 @@ public class CameraActivity extends AppCompatActivity {
             } else {
                 Toast.makeText(this, "❌未授予必要权限，无法使用", Toast.LENGTH_LONG).show();
                 finish();
+                LogManager.i(this, LogManager.SUB_CAMERA, "相机未授权，无法使用");
             }
         }
     }
