@@ -255,7 +255,7 @@ public class BrowserActivity extends Activity {
                             DownloadManager.Request
                                     .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
                     );
-         String address = "https://www.baidu.com";
+        
 new Thread(() -> {
     String address = "https://www.baidu.com";
     try {
