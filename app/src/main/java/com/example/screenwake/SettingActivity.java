@@ -911,14 +911,7 @@ b.setOnClickListener(v -> {
             }
 
             if (audioManager == null) {
-                SettingLogManager.local(
-        this,
-        "音量调整",
-        "SUCCESS",
-        "音量类型=" + streamType
-                + "，调整前=" + before
-                + "，调整后=" + after
-);
+
                 LogManager.log(this,
                         "[SettingActivity.java][VOLUME][ERROR] AudioManager为空");
 
@@ -943,7 +936,16 @@ b.setOnClickListener(v -> {
                             + " direction=" + (increase ? "UP" : "DOWN")
                             + " before=" + before
                             + " after=" + after);
-
+SettingLogManager.local(
+        this,
+        "音量调整",
+        "SUCCESS",
+        "音量类型=" + streamType
+                + "，调整前=" + before
+                + "，调整后=" + after
+                    + "，调整前数值，"
+                    + "，调整后数值"
+);
             refreshVolume();
 
         } catch (Exception e) {
