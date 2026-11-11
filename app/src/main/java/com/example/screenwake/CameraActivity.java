@@ -371,7 +371,8 @@ public class CameraActivity extends AppCompatActivity {
             values.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4");
             values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Movies/ScreenWake");
             // ★ 修复了这里的参数传递
-            outputOptions = MediaStoreOutputOptions.Builder(getContentResolver(), MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+            // 正确写法
+            outputOptions = new MediaStoreOutputOptions.Builder(getContentResolver(), MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
                     .setContentValues(values).build();
         } else {
             Toast.makeText(this, "当前系统版本较低，录像仅保存在应用私有目录", Toast.LENGTH_SHORT).show();
