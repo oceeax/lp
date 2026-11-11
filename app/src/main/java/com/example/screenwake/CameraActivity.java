@@ -1,6 +1,7 @@
 package com.example.screenwake;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -11,22 +12,38 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.Rational;
+import android.util.Size;
 import android.util.TypedValue;
+import android.view.GestureDetector;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
+import androidx.camera.core.CameraControl;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.Preview;
+import androidx.camera.core.ZoomState;
 import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.video.FallbackStrategy;
+import androidx.camera.video.MediaStoreOutputOptions;
+import androidx.camera.video.Quality;
+import androidx.camera.video.QualitySelector;
+import androidx.camera.video.Recorder;
+import androidx.camera.video.Recording;
+import androidx.camera.video.VideoCapture;
+import androidx.camera.video.VideoRecordEvent;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -40,20 +57,30 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class CameraActivity extends AppCompatActivity {
+
     private static final String TAG = "CameraActivity";
-    private static final int REQ_CAMERA_PERMISSION = 2001;
+    private static final int REQ_PERMISSIONS = 2001;
 
     private PreviewView previewView;
     private ProcessCameraProvider cameraProvider;
     private ImageCapture imageCapture;
+    private VideoCapture<Recorder> videoCapture;
     private Camera camera;
 
     private boolean isFrontCamera = false;
     private boolean isFlashOn = false;
+    private boolean isRecording = false;
+    private Recording activeRecording;
 
-    private Button btnCapture, btnSwitch, btnFlash;
+    private Button btnCapture, btnSwitch, btnFlash, btnRecordMode;
+    private SeekBar zoomSeekBar;
+
     private ExecutorService cameraExecutor;
+    private ScaleGestureDetector scaleGestureDetector;
 
+    // ==========================================================
+    // 生命周期
+    // ==========================================================
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,13 +88,14 @@ public class CameraActivity extends AppCompatActivity {
 
         try {
             buildUi();
+            setupGestures();
             if (hasAllPermissions()) {
                 startCamera();
             } else {
-                ActivityCompat.requestPermissions(this, neededPermissions(), REQ_CAMERA_PERMISSION);
+                ActivityCompat.requestPermissions(this, neededPermissions(), REQ_PERMISSIONS);
             }
         } catch (Exception e) {
-            Log.e(TAG, "初始化相机发生致命错误", e);
+            Log.e(TAG, "初始化发生致命错误", e);
             Toast.makeText(this, "初始化失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             finish();
         }
@@ -84,60 +112,18 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    private void buildUi() {
-        FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
-
-        previewView = new PreviewView(this);
-        previewView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
-        root.addView(previewView, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        LinearLayout bar = new LinearLayout(this);
-        bar.setOrientation(LinearLayout.HORIZONTAL);
-        bar.setGravity(Gravity.CENTER);
-        bar.setPadding(dp(12), dp(12), dp(12), dp(12));
-
-        FrameLayout.LayoutParams barLp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        barLp.gravity = Gravity.BOTTOM;
-        barLp.bottomMargin = dp(24);
-
-        btnFlash = makeButton("闪光灯");
-        btnFlash.setOnClickListener(v -> toggleFlash());
-
-        btnCapture = makeButton("拍照");
-        btnCapture.setOnClickListener(v -> takePhoto());
-
-        btnSwitch = makeButton("切换");
-        btnSwitch.setOnClickListener(v -> switchCamera());
-
-        bar.addView(btnFlash, weightLp());
-        bar.addView(btnCapture, weightLp());
-        bar.addView(btnSwitch, weightLp());
-
-        root.addView(bar, barLp);
-        setContentView(root);
-    }
-
-    private Button makeButton(String text) {
-        Button b = new Button(this);
-        b.setText(text);
-        b.setAllCaps(false);
-        return b;
-    }
-
-    private LinearLayout.LayoutParams weightLp() {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        lp.setMargins(dp(6), dp(6), dp(6), dp(6));
-        return lp;
-    }
-
+    // ==========================================================
+    // 权限
+    // ==========================================================
     private String[] neededPermissions() {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            return new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            return new String[]{
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+            };
         }
-        return new String[]{Manifest.permission.CAMERA};
+        return new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO};
     }
 
     private boolean hasAllPermissions() {
@@ -150,16 +136,115 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQ_CAMERA_PERMISSION) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == REQ_PERMISSIONS) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) allGranted = false;
+            }
+            if (allGranted) {
                 startCamera();
             } else {
-                Toast.makeText(this, "❌未授予相机权限，无法使用", Toast.LENGTH_LONG).show();
-                finish(); // 没权限直接退出，防止死机闪退
+                Toast.makeText(this, "❌未授予必要权限，无法使用", Toast.LENGTH_LONG).show();
+                finish();
             }
         }
     }
 
+    // ==========================================================
+    // 动态 UI 构建
+    // ==========================================================
+    private void buildUi() {
+        FrameLayout root = new FrameLayout(this);
+        root.setBackgroundColor(Color.BLACK);
+
+        previewView = new PreviewView(this);
+        previewView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
+        root.addView(previewView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+        // ---- 底部控制栏 ----
+        LinearLayout bottomBar = new LinearLayout(this);
+        bottomBar.setOrientation(LinearLayout.VERTICAL);
+        bottomBar.setGravity(Gravity.CENTER);
+        bottomBar.setPadding(dp(16), dp(16), dp(16), dp(24));
+        bottomBar.setBackgroundColor(0x80000000); // 半透明黑底
+
+        FrameLayout.LayoutParams barLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        barLp.gravity = Gravity.BOTTOM;
+
+        // 1. 变焦滑动条
+        zoomSeekBar = new SeekBar(this);
+        zoomSeekBar.setMax(100);
+        zoomSeekBar.setProgress(0);
+        bottomBar.addView(zoomSeekBar, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        zoomSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser && camera != null) {
+                    float minZoom = camera.getCameraInfo().getZoomState().getValue().getMinZoomRatio();
+                    float maxZoom = camera.getCameraInfo().getZoomState().getValue().getMaxZoomRatio();
+                    float zoom = minZoom + (maxZoom - minZoom) * (progress / 100f);
+                    camera.getCameraControl().setZoomRatio(zoom);
+                }
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        // 2. 按钮行
+        LinearLayout buttonRow = new LinearLayout(this);
+        buttonRow.setOrientation(LinearLayout.HORIZONTAL);
+        buttonRow.setGravity(Gravity.CENTER);
+        buttonRow.setPadding(0, dp(16), 0, 0);
+
+        btnFlash = makeButton("闪光灯");
+        btnFlash.setOnClickListener(v -> toggleFlash());
+
+        btnRecordMode = makeButton("切换录像");
+        btnRecordMode.setOnClickListener(v -> toggleMode());
+
+        btnCapture = makeButton("拍照");
+        btnCapture.setOnClickListener(v -> {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                takePhoto();
+            }
+        });
+
+        btnSwitch = makeButton("切换");
+        btnSwitch.setOnClickListener(v -> switchCamera());
+
+        buttonRow.addView(btnFlash, weightLp());
+        buttonRow.addView(btnRecordMode, weightLp());
+        buttonRow.addView(btnCapture, weightLp());
+        buttonRow.addView(btnSwitch, weightLp());
+
+        bottomBar.addView(buttonRow);
+        root.addView(bottomBar, barLp);
+
+        setContentView(root);
+    }
+
+    private Button makeButton(String text) {
+        Button b = new Button(this);
+        b.setText(text);
+        b.setAllCaps(false);
+        return b;
+    }
+
+    private LinearLayout.LayoutParams weightLp() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+        lp.setMargins(dp(4), dp(4), dp(4), dp(4));
+        return lp;
+    }
+
+    // ==========================================================
+    // 相机启动与绑定
+    // ==========================================================
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(this);
         future.addListener(() -> {
@@ -168,71 +253,114 @@ public class CameraActivity extends AppCompatActivity {
                 bindUseCases();
             } catch (Exception e) {
                 Log.e(TAG, "获取CameraProvider失败", e);
-                Toast.makeText(this, "相机启动失败，可能被占用: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "相机启动失败，可能被占用", Toast.LENGTH_LONG).show();
             }
         }, ContextCompat.getMainExecutor(this));
     }
 
     private void bindUseCases() {
         if (cameraProvider == null) return;
-
         cameraProvider.unbindAll();
-        CameraSelector selector = isFrontCamera ? CameraSelector.DEFAULT_FRONT_CAMERA : CameraSelector.DEFAULT_BACK_CAMERA;
 
+        CameraSelector selector = isFrontCamera
+                ? CameraSelector.DEFAULT_FRONT_CAMERA
+                : CameraSelector.DEFAULT_BACK_CAMERA;
+
+        // 1. 预览
         Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
+        // 2. 拍照
         imageCapture = new ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build();
 
+        // 3. 录像
+        Recorder recorder = new Recorder.Builder()
+                .setQualitySelector(QualitySelector.from(Quality.HD, FallbackStrategy.highestOrLowest()))
+                .build();
+        videoCapture = VideoCapture.withOutput(recorder);
+
         try {
-            camera = cameraProvider.bindToLifecycle(this, selector, preview, imageCapture);
+            // 将三个功能绑定到生命周期
+            camera = cameraProvider.bindToLifecycle(this, selector, preview, imageCapture, videoCapture);
             updateFlashButton();
+            updateZoomSeekBar(); // 重置变焦条范围
         } catch (Exception e) {
             Log.e(TAG, "绑定相机失败", e);
-            Toast.makeText(this, "打开相机硬件失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
-    private void updateFlashButton() {
+    // ==========================================================
+    // 变焦与手势
+    // ==========================================================
+    private void updateZoomSeekBar() {
         if (camera == null) return;
-        boolean hasFlash = camera.getCameraInfo().hasFlashUnit();
-        if (!hasFlash) {
-            isFlashOn = false;
-            camera.getCameraControl().enableTorch(false);
-            btnFlash.setEnabled(false);
-            btnFlash.setText("无闪光灯");
-        } else {
-            btnFlash.setEnabled(true);
-            btnFlash.setText(isFlashOn ? "闪光灯开" : "闪光灯");
+        ZoomState zoomState = camera.getCameraInfo().getZoomState().getValue();
+        if (zoomState != null) {
+            zoomSeekBar.setProgress(0); // 默认回到1x
+            camera.getCameraControl().setZoomRatio(zoomState.getMinZoomRatio());
         }
     }
 
-    private void toggleFlash() {
-        if (camera == null || !camera.getCameraInfo().hasFlashUnit()) return;
-        isFlashOn = !isFlashOn;
-        camera.getCameraControl().enableTorch(isFlashOn);
-        btnFlash.setText(isFlashOn ? "闪光灯开" : "闪光灯");
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupGestures() {
+        scaleGestureDetector = new ScaleGestureDetector(this, new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            @Override
+            public boolean onScale(ScaleGestureDetector detector) {
+                if (camera == null) return false;
+                ZoomState zoomState = camera.getCameraInfo().getZoomState().getValue();
+                if (zoomState != null) {
+                    float currentZoom = zoomState.getZoomRatio();
+                    float delta = detector.getScaleFactor();
+                    float targetZoom = currentZoom * delta;
+                    
+                    // 限制在最大最小范围内
+                    targetZoom = Math.max(zoomState.getMinZoomRatio(), Math.min(targetZoom, zoomState.getMaxZoomRatio()));
+                    camera.getCameraControl().setZoomRatio(targetZoom);
+
+                    // 同步更新 SeekBar
+                    float progress = (targetZoom - zoomState.getMinZoomRatio()) / (zoomState.getMaxZoomRatio() - zoomState.getMinZoomRatio());
+                    zoomSeekBar.setProgress((int) (progress * 100));
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        previewView.setOnTouchListener((v, event) -> {
+            scaleGestureDetector.onTouchEvent(event);
+            return true;
+        });
     }
 
-    private void switchCamera() {
-        if (cameraProvider == null) return;
-        isFrontCamera = !isFrontCamera;
-        isFlashOn = false;
-        bindUseCases();
+    // ==========================================================
+    // 拍照 / 录像 / 切换 / 闪光灯
+    // ==========================================================
+    private void toggleMode() {
+        if (isRecording) {
+            Toast.makeText(this, "请先停止录像", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // 简单地在拍照和录像之间切换UI状态（这里仅作UI提示，真正决定行为的是点击拍摄按钮时判断）
+        if (btnRecordMode.getText().toString().equals("切换录像")) {
+            btnRecordMode.setText("切换拍照");
+            btnCapture.setText("开始录像");
+            btnCapture.setBackgroundColor(Color.RED);
+            btnCapture.setTextColor(Color.WHITE);
+        } else {
+            btnRecordMode.setText("切换录像");
+            btnCapture.setText("拍照");
+            btnCapture.setBackgroundColor(ContextCompat.getColor(this, android.R.color.darker_gray));
+            btnCapture.setTextColor(Color.BLACK);
+        }
     }
 
     private void takePhoto() {
-        if (imageCapture == null) {
-            Toast.makeText(this, "相机尚未就绪", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+        if (imageCapture == null) return;
         String name = "IMG_" + new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.US).format(System.currentTimeMillis()) + ".jpg";
-        ImageCapture.OutputFileOptions options;
-        File legacyFile = null;
 
+        ImageCapture.OutputFileOptions options;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ContentValues values = new ContentValues();
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
@@ -241,31 +369,92 @@ public class CameraActivity extends AppCompatActivity {
             options = new ImageCapture.OutputFileOptions.Builder(getContentResolver(), MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values).build();
         } else {
             File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "ScreenWake");
-            if (!dir.exists() && !dir.mkdirs()) {
-                Toast.makeText(this, "无法创建保存目录", Toast.LENGTH_LONG).show();
-                return;
-            }
-            legacyFile = new File(dir, name);
-            options = new ImageCapture.OutputFileOptions.Builder(legacyFile).build();
+            if (!dir.exists()) dir.mkdirs();
+            options = new ImageCapture.OutputFileOptions.Builder(new File(dir, name)).build();
         }
 
-        final File finalLegacyFile = legacyFile;
         imageCapture.takePicture(options, cameraExecutor, new ImageCapture.OnImageSavedCallback() {
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults results) {
-                Uri uri = results.getSavedUri();
-                if (uri == null && finalLegacyFile != null) {
-                    MediaScannerConnection.scanFile(CameraActivity.this, new String[]{finalLegacyFile.getAbsolutePath()}, new String[]{"image/jpeg"}, null);
-                }
-                runOnUiThread(() -> Toast.makeText(CameraActivity.this, "✅拍照成功", Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(CameraActivity.this, "✅拍照成功", Toast.LENGTH_SHORT).show());
             }
-
             @Override
             public void onError(@NonNull ImageCaptureException exception) {
-                Log.e(TAG, "拍照失败", exception);
-                runOnUiThread(() -> Toast.makeText(CameraActivity.this, "❌拍照失败：" + exception.getMessage(), Toast.LENGTH_LONG).show());
+                runOnUiThread(() -> Toast.makeText(CameraActivity.this, "❌拍照失败", Toast.LENGTH_SHORT).show());
             }
         });
+    }
+
+    private void startRecording() {
+        if (videoCapture == null) return;
+
+        String name = "VID_" + new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(System.currentTimeMillis()) + ".mp4";
+        MediaStoreOutputOptions outputOptions = null;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+            values.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4");
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Movies/ScreenWake");
+            outputOptions = MediaStoreOutputOptions.Builder(getContentResolver(), MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+                    .setContentValues(values).build();
+        } else {
+            // 注意：老版本录像需要处理File的保存
+            Toast.makeText(this, "当前系统版本较低，录像仅保存在应用私有目录", Toast.LENGTH_SHORT).show();
+        }
+
+        if (outputOptions != null) {
+            // 真正开始录制，带录音权限
+            activeRecording = videoCapture.getOutput()
+                    .prepareRecording(this, outputOptions)
+                    .withAudioEnabled()
+                    .start(ContextCompat.getMainExecutor(this), event -> {
+                        if (event instanceof VideoRecordEvent.Start) {
+                            isRecording = true;
+                            runOnUiThread(() -> {
+                                btnCapture.setText("停止录像");
+                                btnCapture.setBackgroundColor(Color.RED);
+                                btnCapture.setTextColor(Color.WHITE);
+                            });
+                        } else if (event instanceof VideoRecordEvent.Finalize) {
+                            isRecording = false;
+                            runOnUiThread(() -> {
+                                Toast.makeText(CameraActivity.this, "✅录像已保存", Toast.LENGTH_SHORT).show();
+                                btnCapture.setText("开始录像");
+                                btnCapture.setBackgroundColor(Color.RED);
+                                btnCapture.setTextColor(Color.WHITE);
+                            });
+                        }
+                    });
+        }
+    }
+
+    private void stopRecording() {
+        if (activeRecording != null) {
+            activeRecording.stop();
+            activeRecording = null;
+        }
+    }
+
+    private void switchCamera() {
+        if (cameraProvider == null || isRecording) return;
+        isFrontCamera = !isFrontCamera;
+        isFlashOn = false;
+        bindUseCases();
+    }
+
+    private void updateFlashButton() {
+        if (camera == null) return;
+        boolean hasFlash = camera.getCameraInfo().hasFlashUnit();
+        btnFlash.setEnabled(hasFlash);
+        btnFlash.setText(hasFlash ? "闪光灯" : "无闪光灯");
+    }
+
+    private void toggleFlash() {
+        if (camera == null || !camera.getCameraInfo().hasFlashUnit()) return;
+        isFlashOn = !isFlashOn;
+        camera.getCameraControl().enableTorch(isFlashOn);
+        btnFlash.setText(isFlashOn ? "闪光灯开" : "闪光灯");
     }
 
     private int dp(int value) {
