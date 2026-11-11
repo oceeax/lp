@@ -5,19 +5,14 @@ import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.util.Rational;
-import android.util.Size;
 import android.util.TypedValue;
-import android.view.GestureDetector;
 import android.view.Gravity;
-import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -29,7 +24,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.Camera;
-import androidx.camera.core.CameraControl;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
@@ -78,9 +72,6 @@ public class CameraActivity extends AppCompatActivity {
     private ExecutorService cameraExecutor;
     private ScaleGestureDetector scaleGestureDetector;
 
-    // ==========================================================
-    // 生命周期
-    // ==========================================================
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -112,9 +103,6 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    // ==========================================================
-    // 权限
-    // ==========================================================
     private String[] neededPermissions() {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
             return new String[]{
@@ -150,9 +138,6 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
-    // ==========================================================
-    // 动态 UI 构建
-    // ==========================================================
     private void buildUi() {
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(Color.BLACK);
@@ -162,18 +147,16 @@ public class CameraActivity extends AppCompatActivity {
         root.addView(previewView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        // ---- 底部控制栏 ----
         LinearLayout bottomBar = new LinearLayout(this);
         bottomBar.setOrientation(LinearLayout.VERTICAL);
         bottomBar.setGravity(Gravity.CENTER);
         bottomBar.setPadding(dp(16), dp(16), dp(16), dp(24));
-        bottomBar.setBackgroundColor(0x80000000); // 半透明黑底
+        bottomBar.setBackgroundColor(0x80000000);
 
         FrameLayout.LayoutParams barLp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         barLp.gravity = Gravity.BOTTOM;
 
-        // 1. 变焦滑动条
         zoomSeekBar = new SeekBar(this);
         zoomSeekBar.setMax(100);
         zoomSeekBar.setProgress(0);
@@ -183,17 +166,19 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (fromUser && camera != null) {
-                    float minZoom = camera.getCameraInfo().getZoomState().getValue().getMinZoomRatio();
-                    float maxZoom = camera.getCameraInfo().getZoomState().getValue().getMaxZoomRatio();
-                    float zoom = minZoom + (maxZoom - minZoom) * (progress / 100f);
-                    camera.getCameraControl().setZoomRatio(zoom);
+                    ZoomState zoomState = camera.getCameraInfo().getZoomState().getValue();
+                    if (zoomState != null) {
+                        float minZoom = zoomState.getMinZoomRatio();
+                        float maxZoom = zoomState.getMaxZoomRatio();
+                        float zoom = minZoom + (maxZoom - minZoom) * (progress / 100f);
+                        camera.getCameraControl().setZoomRatio(zoom);
+                    }
                 }
             }
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        // 2. 按钮行
         LinearLayout buttonRow = new LinearLayout(this);
         buttonRow.setOrientation(LinearLayout.HORIZONTAL);
         buttonRow.setGravity(Gravity.CENTER);
@@ -242,9 +227,6 @@ public class CameraActivity extends AppCompatActivity {
         return lp;
     }
 
-    // ==========================================================
-    // 相机启动与绑定
-    // ==========================================================
     private void startCamera() {
         ListenableFuture<ProcessCameraProvider> future = ProcessCameraProvider.getInstance(this);
         future.addListener(() -> {
@@ -266,39 +248,37 @@ public class CameraActivity extends AppCompatActivity {
                 ? CameraSelector.DEFAULT_FRONT_CAMERA
                 : CameraSelector.DEFAULT_BACK_CAMERA;
 
-        // 1. 预览
         Preview preview = new Preview.Builder().build();
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
-        // 2. 拍照
         imageCapture = new ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build();
 
-        // 3. 录像
+        // ★ 修复后的录像构建代码（放在这里才对！）
         Recorder recorder = new Recorder.Builder()
-                .setQualitySelector(QualitySelector.from(Quality.HD, FallbackStrategy.highestOrLowest()))
+                .setQualitySelector(QualitySelector.from(
+                        Quality.HD,
+                        FallbackStrategy.higherQualityOrLowerThan(Quality.SD)
+                ))
                 .build();
         videoCapture = VideoCapture.withOutput(recorder);
 
         try {
-            // 将三个功能绑定到生命周期
             camera = cameraProvider.bindToLifecycle(this, selector, preview, imageCapture, videoCapture);
             updateFlashButton();
-            updateZoomSeekBar(); // 重置变焦条范围
+            updateZoomSeekBar();
         } catch (Exception e) {
             Log.e(TAG, "绑定相机失败", e);
+            Toast.makeText(this, "绑定相机失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
-    // ==========================================================
-    // 变焦与手势
-    // ==========================================================
     private void updateZoomSeekBar() {
         if (camera == null) return;
         ZoomState zoomState = camera.getCameraInfo().getZoomState().getValue();
         if (zoomState != null) {
-            zoomSeekBar.setProgress(0); // 默认回到1x
+            zoomSeekBar.setProgress(0);
             camera.getCameraControl().setZoomRatio(zoomState.getMinZoomRatio());
         }
     }
@@ -315,11 +295,9 @@ public class CameraActivity extends AppCompatActivity {
                     float delta = detector.getScaleFactor();
                     float targetZoom = currentZoom * delta;
                     
-                    // 限制在最大最小范围内
                     targetZoom = Math.max(zoomState.getMinZoomRatio(), Math.min(targetZoom, zoomState.getMaxZoomRatio()));
                     camera.getCameraControl().setZoomRatio(targetZoom);
 
-                    // 同步更新 SeekBar
                     float progress = (targetZoom - zoomState.getMinZoomRatio()) / (zoomState.getMaxZoomRatio() - zoomState.getMinZoomRatio());
                     zoomSeekBar.setProgress((int) (progress * 100));
                     return true;
@@ -334,15 +312,11 @@ public class CameraActivity extends AppCompatActivity {
         });
     }
 
-    // ==========================================================
-    // 拍照 / 录像 / 切换 / 闪光灯
-    // ==========================================================
     private void toggleMode() {
         if (isRecording) {
             Toast.makeText(this, "请先停止录像", Toast.LENGTH_SHORT).show();
             return;
         }
-        // 简单地在拍照和录像之间切换UI状态（这里仅作UI提示，真正决定行为的是点击拍摄按钮时判断）
         if (btnRecordMode.getText().toString().equals("切换录像")) {
             btnRecordMode.setText("切换拍照");
             btnCapture.setText("开始录像");
@@ -396,15 +370,14 @@ public class CameraActivity extends AppCompatActivity {
             values.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
             values.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4");
             values.put(MediaStore.MediaColumns.RELATIVE_PATH, "Movies/ScreenWake");
+            // ★ 修复了这里的参数传递
             outputOptions = MediaStoreOutputOptions.Builder(getContentResolver(), MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
                     .setContentValues(values).build();
         } else {
-            // 注意：老版本录像需要处理File的保存
             Toast.makeText(this, "当前系统版本较低，录像仅保存在应用私有目录", Toast.LENGTH_SHORT).show();
         }
 
         if (outputOptions != null) {
-            // 真正开始录制，带录音权限
             activeRecording = videoCapture.getOutput()
                     .prepareRecording(this, outputOptions)
                     .withAudioEnabled()
