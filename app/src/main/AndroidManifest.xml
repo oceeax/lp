@@ -25,7 +25,6 @@
     <!-- ============ 蓝牙 ============ -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-    <!-- 若要扫描周边设备还需加，用不到可删 -->
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 
     <!-- ============ 开机启动 ============ -->
@@ -65,10 +64,12 @@
         </provider>
 
         <!-- ========= Activity 所有可见页面 ========= -->
-        <!-- 设置页面 ---->
+        
+        <!-- 设置页面 (加上了 AppCompat 主题，防止闪退) -->
         <activity
             android:name=".SettingActivity"
-            android:exported="false"/>
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
         
         <!-- 定时器页面 -->
         <activity
@@ -89,10 +90,11 @@
             android:name=".MultiWsActivity"
             android:exported="false"
             android:label="五路接收" />
+            
         <activity android:name=".LogManager" android:exported="false" />
         <activity android:name=".WebMonitor" android:exported="false" />
 
-        <!-- ★ 新增：相机页面 -->
+        <!-- 相机页面 -->
         <activity
             android:name=".CameraActivity"
             android:exported="false"
@@ -115,16 +117,12 @@
             android:exported="false"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
 
-        <!-- 定时-->
+        <!-- 其他页面 -->
         <activity
             android:name=".WhiteListUtil"
             android:exported="false" />
-        <!-- 日志  -->
         <activity
             android:name=".LogManagerActivity"
-            android:exported="false" />
-        <activity
-            android:name=".BootReceiver"
             android:exported="false" />
         <activity
             android:name=".CommandPoller"
@@ -151,7 +149,7 @@
             android:name=".FloatWindowService"
             android:exported="false" />
 
-        <!-- 语音播报后台子服务，被VoiceReader页面调用 -->
+        <!-- 语音播报后台子服务 -->
         <service
             android:name=".ReaderService"
             android:exported="false" />
@@ -175,7 +173,7 @@
             android:foregroundServiceType="dataSync" />
 
         <!-- ========= Receiver 广播接收器 ========= -->
-        <!-- 开机广播：负责开机完成后做亮屏唤醒逻辑 BootReceiver.java -->
+        <!-- 开机广播 -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
@@ -197,4 +195,5 @@
 
     </application>
 </manifest>
+
 
