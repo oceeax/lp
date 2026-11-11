@@ -37,6 +37,7 @@ public class SettingActivity extends AppCompatActivity {
         refreshCameraStatus();
 
         // 申请相机按钮点击事件
+        setContentView(R.layout.activity_setting);
         btnCamera.setOnClickListener(v -> {
             int hasCam = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
             if (hasCam == PackageManager.PERMISSION_GRANTED) {
