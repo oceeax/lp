@@ -1,4 +1,4 @@
-package com.example.voicereader;
+package com.example.screenwake;
 import androidx.appcompat.app.AppCompatActivity;
 import android.app.*;
 import android.os.*;
