@@ -108,10 +108,10 @@
             android:name=".FloatWindowService"
             android:exported="false"/>
         <service
-            android:name=".voicereader"
+            android:name=".Voicereader"
             android:exported="false"/>
         <service
-            android:name=".MultiWsActivity.java"
+            android:name=".WebMonitorActivity"
             android:exported="false"/>
         <!-- 原有广播接收器 -->
         <receiver
@@ -120,7 +120,7 @@
             android:exported="true">
             <!-- 日志 -->
         <receiver
-            android:name=".LogManagerActivity.java"
+            android:name=".LogManagerActivity"
             android:enabled="true"
             android:exported="true">
         <service
