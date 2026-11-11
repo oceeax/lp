@@ -143,12 +143,12 @@ public class MainActivity extends Activity implements CommandPoller.ServerBindNo
                 new GridItem("内置浏览器", "🌐", 2, BrowserActivity.class)
         );
         addGridRow(section,
-                new GridItem("唤醒功能", "⚡", 3, ScreenWakeService.class),
+                new GridItem("相机功能", "⚡", 3, ScreenWakeService.class),
                 new GridItem("语音播报", "🍦", 4, VoiceReader.class),
                 new GridItem("定时任务", "⏰", 5, AlarmScheduler.class)
         );
         addGridRow(section,
-                new GridItem("日志查看", "📝", 6, null),
+                new GridItem("日志查看", "📝", 6, LogManagerActivity.class),
                 new GridItem("数据上传", "☁️", 7, DeviceUploader.class),
                 new GridItem("设置权限", "⚙️", 8, SettingActivity.class)
         );
