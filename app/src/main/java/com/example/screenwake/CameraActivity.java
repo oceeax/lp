@@ -90,6 +90,7 @@ public class CameraActivity extends AppCompatActivity {
             Toast.makeText(this, "初始化失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
             finish();
         }
+        LogManager.i(this, LogManager.SUB_CAMERA, "相机页面已打开
     }
 
     @Override
@@ -101,6 +102,7 @@ public class CameraActivity extends AppCompatActivity {
         if (cameraExecutor != null) {
             cameraExecutor.shutdown();
         }
+        LogManager.i(this, LogManager.SUB_CAMERA, "相机页面关闭
     }
 
     private String[] neededPermissions() {
@@ -201,12 +203,7 @@ public class CameraActivity extends AppCompatActivity {
                 takePhoto();
             }
         });
-        // 拍照成功时：
-        LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "拍照成功，文件已保存至相册");
-
-        // 录像开始/结束时：
-        LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "开始录制视频...");
-        LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "停止录像并保存成功");
+     
         btnSwitch = makeButton("切换");
         btnSwitch.setOnClickListener(v -> switchCamera());
 
@@ -361,10 +358,12 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults results) {
                 runOnUiThread(() -> Toast.makeText(CameraActivity.this, "✅拍照成功", Toast.LENGTH_SHORT).show());
+                LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "拍照成功，文件保存于: " + results.getSavedUri());
             }
             @Override
             public void onError(@NonNull ImageCaptureException exception) {
                 runOnUiThread(() -> Toast.makeText(CameraActivity.this, "❌拍照失败", Toast.LENGTH_SHORT).show());
+                LogManager.e(CameraActivity.this, LogManager.SUB_CAMERA, "拍照失败", exception);
             }
         });
     }
@@ -430,12 +429,7 @@ public class CameraActivity extends AppCompatActivity {
         btnFlash.setEnabled(hasFlash);
         btnFlash.setText(hasFlash ? "闪光灯" : "无闪光灯");
     }
-    // 拍照成功时：
-    LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "拍照成功，文件已保存至相册");
-
-// 录像开始/结束时：
-    LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "开始录制视频...");
-    LogManager.i(CameraActivity.this, LogManager.SUB_CAMERA, "停止录像并保存成功");
+ 
     private void toggleFlash() {
         if (camera == null || !camera.getCameraInfo().hasFlashUnit()) return;
         isFlashOn = !isFlashOn;
