@@ -1,12 +1,17 @@
 package com.example.screenwake;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.provider.Settings;
+import android.view.Gravity;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,24 +25,18 @@ public class SettingActivity extends AppCompatActivity {
     private TextView tvCameraStatus;
     private Button btnCamera;
 
-public class SettingActivity extends AppCompatActivity {
-    private static final int REQ_CAMERA = 1002;
-    private TextView tvCameraStatus;
-    private Button btnCamera;
+    private LinearLayout root;
+    private TextView status;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.你的设置布局文件名);
+        setContentView(R.layout.activity_setting);
 
         tvCameraStatus = findViewById(R.id.tv_camera_status);
         btnCamera = findViewById(R.id.btn_camera);
-
-        // 打开页面立刻刷新相机权限状态
         refreshCameraStatus();
 
-        // 申请相机按钮点击事件
-        setContentView(R.layout.activity_setting);
         btnCamera.setOnClickListener(v -> {
             int hasCam = ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
             if (hasCam == PackageManager.PERMISSION_GRANTED) {
@@ -47,9 +46,25 @@ public class SettingActivity extends AppCompatActivity {
                         new String[]{Manifest.permission.CAMERA}, REQ_CAMERA);
             }
         });
+
+        // 动态构建原有悬浮窗/电池/通知全部UI
+        buildPage();
+
+        if (Build.VERSION.SDK_INT >= 33 &&
+                checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1001);
+        }
+        refreshStatus();
     }
 
-    // 刷新相机权限状态
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (status != null) refreshStatus();
+        refreshCameraStatus();
+    }
+
+    // ==========相机权限相关==========
     private void refreshCameraStatus() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED) {
@@ -59,8 +74,6 @@ public class SettingActivity extends AppCompatActivity {
         }
     }
 
-
-    // 权限回调，授权/拒绝之后自动刷新状态文字
     @Override
     public void onRequestPermissionsResult(int code, @NonNull String[] perms, @NonNull int[] res) {
         super.onRequestPermissionsResult(code, perms, res);
@@ -70,7 +83,6 @@ public class SettingActivity extends AppCompatActivity {
                 Toast.makeText(this, "✅相机授权成功", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "❌相机权限被拒绝", Toast.LENGTH_SHORT).show();
-                // 用户勾选不再询问，跳转系统设置
                 boolean noAsk = !shouldShowRequestPermissionRationale(Manifest.permission.CAMERA);
                 if (noAsk) {
                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -79,24 +91,12 @@ public class SettingActivity extends AppCompatActivity {
                 }
             }
         }
-    }
-}
-public class SettingsActivity extends Activity {
-    private LinearLayout root;
-    private TextView status;
-
-    @Override protected void onCreate(Bundle b) {
-        super.onCreate(b);
-        buildPage();
-        if (Build.VERSION.SDK_INT >= 33 &&
-            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1001);
+        if(code ==1001){
+            refreshStatus();
         }
-        refreshStatus();
     }
 
-    @Override protected void onResume() { super.onResume(); if (status != null) refreshStatus(); }
-
+    // ==========原有悬浮窗、电池、通知、测试功能全部保留==========
     private void buildPage() {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -110,7 +110,7 @@ public class SettingsActivity extends Activity {
         root.addView(title);
 
         TextView intro = new TextView(this);
-        intro.setText("请逐项设置权限。完成后先手动测试，再重启手机验证。\\n注意：不会绕过锁屏密码。");
+        intro.setText("请逐项设置权限。完成后先手动测试，再重启手机验证。\n注意：不会绕过锁屏密码。");
         intro.setTextSize(15);
         intro.setPadding(0, 16, 0, 12);
         root.addView(intro);
@@ -131,7 +131,10 @@ public class SettingsActivity extends Activity {
         note.setTextSize(13);
         note.setPadding(0, 18, 0, 0);
         root.addView(note);
-        setContentView(root);
+
+        //把动态生成的布局加到页面，放在xml控件下方
+        LinearLayout container = findViewById(android.R.id.content);
+        container.addView(root);
     }
 
     private void button(String label, Runnable action) {
@@ -146,25 +149,29 @@ public class SettingsActivity extends Activity {
         boolean overlay = Build.VERSION.SDK_INT < 23 || Settings.canDrawOverlays(this);
         boolean battery = false;
         if (Build.VERSION.SDK_INT >= 23) {
-            PowerManager pm = (PowerManager)getSystemService(POWER_SERVICE);
+            PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
             battery = pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
         }
         String notice = "系统版本无需运行时通知授权";
         if (Build.VERSION.SDK_INT >= 33) {
             notice = checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED ? "已允许" : "未允许";
         }
-        status.setText("权限状态：\\n悬浮窗：" + (overlay ? "已允许" : "未允许") +
-            "\\n通知：" + notice +
-            "\\n电池优化：" + (battery ? "已忽略" : "仍受限制/未确认") +
-            "\\n自启动、后台弹出：请检查 ColorOS 设置");
+        status.setText("权限状态：\n悬浮窗：" + (overlay ? "已允许" : "未允许") +
+                "\n通知：" + notice +
+                "\n电池优化：" + (battery ? "已忽略" : "仍受限制/未确认") +
+                "\n自启动、后台弹出：请检查 ColorOS 设置");
     }
 
     private void openOverlay() {
         if (Build.VERSION.SDK_INT >= 23) {
-            try { startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))); }
-            catch (Exception e) { openAppDetails(); }
+            try {
+                startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())));
+            } catch (Exception e) {
+                openAppDetails();
+            }
         }
     }
+
     private void openNotifications() {
         if (Build.VERSION.SDK_INT >= 26) {
             Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS);
@@ -172,23 +179,29 @@ public class SettingsActivity extends Activity {
             startActivity(i);
         } else openAppDetails();
     }
+
     private void openBattery() {
         if (Build.VERSION.SDK_INT >= 23) {
-            try { startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName()))); }
-            catch (Exception e) { startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)); }
+            try {
+                startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName())));
+            } catch (Exception e) {
+                startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+            }
         }
     }
+
     private void openAppDetails() {
         startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
     }
+
     private void testNow() {
         try {
             Intent i = new Intent(this, ScreenWakeService.class);
             i.setAction(ScreenWakeService.ACTION_START);
-            if (Build.VERSION.SDK_INT >= 26) startForegroundService(i); else startService(i);
+            if (Build.VERSION.SDK_INT >= 26) startForegroundService(i);
+            else startService(i);
         } catch (Exception e) {
             Toast.makeText(this, "启动失败：" + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 }
-    }
