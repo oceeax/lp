@@ -15,7 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class SettingsActivity extends Activity {
+public class SettingActivity extends Activity {
     private LinearLayout root;
     private TextView status;
 
