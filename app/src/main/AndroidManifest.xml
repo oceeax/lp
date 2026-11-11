@@ -71,12 +71,27 @@
 
         <!-- 设置 -->
         <activity
-            android:name=".SettingsActivity"
+            android:name=".SettingsPage"
             android:exported="false"/>
-
+        <!-- 设置 -->
+        <activity
+            android:name=".WebMonitor"
+            android:exported="false"/>
+            <!-- 设置 -->
+        <activity
+            android:name=".LogManager"
+            android:exported="false"/>
+            <!-- 设置 -->
+        <activity
+            android:name=".AlarmScheduler"
+            android:exported="false"/>
+            <!-- 设置 -->
+        <activity
+            android:name=".SettingsPage"
+            android:exported="false"/>
         <!-- 亮屏图案 -->
         <activity
-            android:name=".PatternActivity"
+            android:name=".DeviceUploader"
             android:exported="false"/>
 
         <!-- 开机接收器 -->
