@@ -68,9 +68,8 @@ public class BrowserActivity extends Activity {
 
         buildBrowser();
         loadHome();
-        LogManager.log(ctx,"[s.java][CRASH] 程序发生崩溃");
+            LogManager.log(BrowserActivity.this,"[AlarmScheduler.java][DELAY] 任务执行延后");
     }
-
     private void buildBrowser() {
 
         root = new FrameLayout(this);
@@ -115,8 +114,7 @@ public class BrowserActivity extends Activity {
                 }
 
                 return handleUrl(view, request.getUrl().toString());
-                LogManager.log(ctx,"[AlarmScheduler.java][DELAY] 任务执行延后");
-                LogManager.log(ctx,"[TaskReceiver.java][TIMEOUT] 网络请求超时");
+            LogManager.log(BrowserActivity.this,"[TaskReceiver.java][TIMEOUT] 网络请求超时");
                 
             }
 
@@ -140,6 +138,7 @@ public class BrowserActivity extends Activity {
                 if (address != null && url != null) {
                     address.setText(url);
                 }
+                LogManager.log(BrowserActivity.this,"[AlarmScheduler.java][DELAY] 任务执行延后");
             }
 
             @Override
