@@ -49,7 +49,7 @@
 
     <application
         android:allowBackup="false"
-        android:label="午夜星"
+        android:label="梭鱼湾"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="true">
 
