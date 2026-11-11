@@ -259,7 +259,9 @@ public class BrowserActivity extends Activity {
 new Thread(() -> {
     String address = "https://www.baidu.com";
     try {
-        URL url = new URL(www.163.com);
+    
+        // 不用单独写address，直接用下载本身的url
+URL testUrl = new URL(url);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(8000);
         conn.setReadTimeout(10000);
