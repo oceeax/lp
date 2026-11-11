@@ -266,14 +266,31 @@ public class SettingActivity extends AppCompatActivity {
         Button b = new Button(this);
         b.setText(label);
         b.setAllCaps(false);
+b.setOnClickListener(v -> {
 
-        b.setOnClickListener(v -> {
-            LogManager.log(this,
-                    "[SettingActivity.java][BUTTON] 点击：" + label);
+    // 独立设置日志：记录本地操作请求
+    SettingLogManager.local(
+            this,
+            label,
+            "REQUEST",
+            "用户点击设置按钮"
+    );
 
-            try {
-                action.run();
-            } catch (Exception e) {
+    LogManager.log(this,
+            "[SettingActivity.java][BUTTON] 点击：" + label);
+
+    try {
+        action.run();
+
+    } catch (Exception e) {
+
+        // 独立设置日志：记录失败
+        SettingLogManager.local(
+                this,
+                label,
+                "FAILED",
+                "执行异常：" + e.toString()
+        );
                 LogManager.log(this,
                         "[SettingActivity.java][BUTTON][ERROR] "
                                 + label + " " + e.toString());
@@ -894,7 +911,14 @@ public class SettingActivity extends AppCompatActivity {
             }
 
             if (audioManager == null) {
-
+                SettingLogManager.local(
+        this,
+        "音量调整",
+        "SUCCESS",
+        "音量类型=" + streamType
+                + "，调整前=" + before
+                + "，调整后=" + after
+);
                 LogManager.log(this,
                         "[SettingActivity.java][VOLUME][ERROR] AudioManager为空");
 
