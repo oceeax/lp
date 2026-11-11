@@ -20,6 +20,7 @@ import android.app.Activity;
 
 import java.io.*;
 import java.util.*;
+
 public class VoiceReader extends Activity {
     static final int PICK_TREE=101, PICK_FILE=102, REQ_NOTIFY=103;
     TextView status,selected,engineInfo,gainLabel;
@@ -74,6 +75,8 @@ public class VoiceReader extends Activity {
 
         initTTS();
 
+        // 【日志】记录初始化
+        LogManager.i(this, LogManager.SUB_APP, "VoiceReader 界面初始化完成");
     }
 
     void buildUi() {
@@ -267,6 +270,8 @@ public class VoiceReader extends Activity {
             startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
         } catch(Exception e) {
             status.setText("无法打开系统 TTS 设置，请到系统设置中搜索‘文字转语音’");
+            // 【日志】记录打开设置失败
+            LogManager.e(this, LogManager.SUB_APP, "无法打开系统 TTS 设置界面", e);
         }
     }
 
@@ -324,6 +329,8 @@ public class VoiceReader extends Activity {
         int p=offlineVoice==null?-1:offlineVoice.getSelectedItemPosition();
         if(p<0 || p>=offlineVoices.size()) {
             status.setText("没有可确定的本机离线中文语音包。请先在手机系统 TTS 设置中下载离线中文语音。");
+            // 【日志】记录语音包确认失败
+            LogManager.w(this, LogManager.SUB_APP, "确定离线语音包失败: 列表为空或未选择");
             return;
         }
         Voice v=offlineVoices.get(p);
@@ -335,12 +342,17 @@ public class VoiceReader extends Activity {
         voiceStatus.setText("当前已确定：本机离线语音包\n"+v.getName());
         updateRunningServiceVoice();
         status.setText("已确定本机离线语音包，可以测试或开始监控");
+        
+        // 【日志】记录语音包切换成功
+        LogManager.i(this, LogManager.SUB_APP, "语音配置变更: 已切换本机离线语音包 [" + v.getName() + "]");
     }
 
     void confirmOnlineVoice() {
         int p=onlineVoice==null?-1:onlineVoice.getSelectedItemPosition();
         if(p<0 || p>=onlineVoices.size()) {
             status.setText("没有可确定的本机联网中文语音包。请检查系统 TTS 引擎及联网中文音色。");
+            // 【日志】记录语音包确认失败
+            LogManager.w(this, LogManager.SUB_APP, "确定联网语音包失败: 列表为空或未选择");
             return;
         }
         Voice v=onlineVoices.get(p);
@@ -352,6 +364,9 @@ public class VoiceReader extends Activity {
         voiceStatus.setText("当前已确定：本机联网语音包\n"+v.getName());
         updateRunningServiceVoice();
         status.setText("已确定本机联网语音包，可以测试或开始监控");
+        
+        // 【日志】记录语音包切换成功
+        LogManager.i(this, LogManager.SUB_APP, "语音配置变更: 已切换本机联网语音包 [" + v.getName() + "]");
     }
 
     void updateRunningServiceVoice() {
@@ -370,6 +385,8 @@ public class VoiceReader extends Activity {
                   url.startsWith("https://"))) {
 
             status.setText("网址必须以 http:// 或 https:// 开头");
+            // 【日志】记录格式错误
+            LogManager.w(this, LogManager.SUB_NETWORK, "保存网页监控地址失败: 格式不正确 (" + url + ")");
             return;
         }
 
@@ -386,6 +403,13 @@ public class VoiceReader extends Activity {
                 ?"网页地址已清空"
                 :"网页地址已确定并保存"
         );
+        
+        // 【日志】记录网络配置更新
+        if (confirmedWebUrl.isEmpty()) {
+            LogManager.i(this, LogManager.SUB_NETWORK, "网页监控地址已清空");
+        } else {
+            LogManager.i(this, LogManager.SUB_NETWORK, "网页监控地址已更新保存: " + confirmedWebUrl);
+        }
     }
 
     void initTTS() {
@@ -401,6 +425,9 @@ public class VoiceReader extends Activity {
                 engineInfo.setText("本机语音引擎：初始化失败");
 
                 status.setText("本机 TTS 初始化失败");
+                
+                // 【日志】记录引擎初始化失败（重点）
+                LogManager.e(this, LogManager.SUB_CRASH, "TTS 语音引擎初始化失败，返回码: " + result, null);
 
                 return;
             }
@@ -430,6 +457,8 @@ public class VoiceReader extends Activity {
 
             } catch(Exception e) {
                 status.setText("TTS 初始化异常："+e.getMessage());
+                // 【日志】记录引擎异常（重点）
+                LogManager.e(this, LogManager.SUB_CRASH, "TTS 初始化引发异常", e);
             }
         });
     }
@@ -451,7 +480,18 @@ public class VoiceReader extends Activity {
             }
         } catch(Exception e) {
             status.setText("读取系统语音包失败："+e.getMessage());
+            // 【日志】记录语音包读取失败（重点）
+            LogManager.e(this, LogManager.SUB_APP, "读取系统语音包列表发生异常", e);
         }
+        
+        // 【日志】记录语音包数量，若为0则报警
+        if(offlineVoices.isEmpty()) {
+            LogManager.w(this, LogManager.SUB_APP, "本机未检测到可用的离线中文语音包");
+        }
+        if(onlineVoices.isEmpty()) {
+            LogManager.w(this, LogManager.SUB_APP, "本机未检测到可用的联网中文语音包");
+        }
+        
         Comparator<Voice> byQuality=(a,b)->Integer.compare(b.getQuality(),a.getQuality());
         Collections.sort(offlineVoices,byQuality);
         Collections.sort(onlineVoices,byQuality);
@@ -470,6 +510,8 @@ public class VoiceReader extends Activity {
         if(!activeFound && activeVoiceName!=null && !activeVoiceName.isEmpty()) {
             activeVoiceName="";
             prefs.edit().remove("active_voice_name").apply();
+            // 【日志】当前使用的语音包失效
+            LogManager.w(this, LogManager.SUB_APP, "之前保存的语音包已失效，已重置选择");
         }
         restoreVoiceSelection(activeNetworkMode?onlineVoice:offlineVoice,
                 activeList,activeVoiceName);
@@ -496,6 +538,8 @@ public class VoiceReader extends Activity {
     void testSpeech() {
         if(activeVoiceName==null || activeVoiceName.isEmpty()) {
             status.setText("请先选择语音包，并点击对应的确定按钮");
+            // 【日志】记录测试播放失败
+            LogManager.w(this, LogManager.SUB_COMMAND, "测试朗读失败: 尚未选择并确认语音包");
             return;
         }
         speakThroughService("你好，现在正在测试当前已确定的中文语音，一二三四五。");
@@ -504,6 +548,8 @@ public class VoiceReader extends Activity {
     void speakText(String text) {
         if(activeVoiceName==null || activeVoiceName.isEmpty()) {
             status.setText("请先选择语音包，并点击对应的确定按钮");
+            // 【日志】记录手动播放失败
+            LogManager.w(this, LogManager.SUB_COMMAND, "手动朗读失败: 尚未选择并确认语音包");
             return;
         }
         speakThroughService(text);
@@ -516,6 +562,10 @@ public class VoiceReader extends Activity {
         putSpeechSettings(i);
         startReaderService(i);
         status.setText(activeNetworkMode?"已提交本机联网语音朗读":"已提交本机离线语音朗读");
+        
+        // 【日志】记录成功发出朗读指令（硬件播放提交）
+        LogManager.i(this, LogManager.SUB_COMMAND, "提交语音播放请求: " + 
+            (activeNetworkMode?"[联网模式]":"[离线模式]") + " 文本长度:" + text.length());
     }
 
     void putSpeechSettings(Intent i) {
@@ -600,6 +650,9 @@ public class VoiceReader extends Activity {
             refreshSelection();
 
             status.setText("监控文件夹授权成功");
+            
+            // 【日志】记录目录选择成功
+            LogManager.i(this, LogManager.SUB_UPLOAD, "监控文件夹授权成功: " + treeDisplayName(u));
 
         } else if(req==PICK_FILE) {
 
@@ -610,6 +663,9 @@ public class VoiceReader extends Activity {
             refreshSelection();
 
             status.setText("文件已选择");
+            
+            // 【日志】记录文件选择成功
+            LogManager.i(this, LogManager.SUB_UPLOAD, "指定监控文件成功: " + displayName(u));
         }
     }
 
@@ -682,6 +738,8 @@ public class VoiceReader extends Activity {
 
         if(fileUri==null) {
             status.setText("请先选择一个文件");
+            // 【日志】记录操作失误
+            LogManager.w(this, LogManager.SUB_APP, "读取失败: 用户未选择指定的文件");
             return;
         }
 
@@ -692,6 +750,8 @@ public class VoiceReader extends Activity {
 
         if(treeUri==null) {
             status.setText("请先选择监控文件夹");
+            // 【日志】记录操作失误
+            LogManager.w(this, LogManager.SUB_APP, "读取失败: 用户未选择监控目录");
             return;
         }
 
@@ -701,6 +761,8 @@ public class VoiceReader extends Activity {
 
             if(u==null) {
                 status.setText("目录中没有 TXT/CSV/LOG 文件");
+                // 【日志】记录找不到文件
+                LogManager.w(this, LogManager.SUB_APP, "读取最新文件失败: 目录中没有符合条件的文本文件");
                 return;
             }
 
@@ -708,6 +770,8 @@ public class VoiceReader extends Activity {
 
         } catch(Exception e) {
             status.setText("读取目录失败："+e.getMessage());
+            // 【日志】记录读取目录异常
+            LogManager.e(this, LogManager.SUB_APP, "读取监控目录失败", e);
         }
     }
 
@@ -790,12 +854,16 @@ public class VoiceReader extends Activity {
 
             if(s.isEmpty()) {
                 status.setText("文件最后一行为空");
+                // 【日志】记录空文件
+                LogManager.w(this, LogManager.SUB_APP, "读取文件结束: 文件最后一行为空");
             } else {
                 speakText(s);
             }
 
         } catch(Exception e) {
             status.setText("读取失败："+e.getMessage());
+            // 【日志】记录读取文件异常
+            LogManager.e(this, LogManager.SUB_APP, "读取文件内容发生异常", e);
         }
     }
 
@@ -808,21 +876,29 @@ public class VoiceReader extends Activity {
 
         if(useLocal && treeUri==null) {
             status.setText("已勾选本机监控，但还没有选择文件夹");
+            // 【日志】记录校验失败
+            LogManager.w(this, LogManager.SUB_COMMAND, "启动监控失败: 未选择文件夹");
             return;
         }
 
         if(useWeb && url.isEmpty()) {
             status.setText("请先输入网页地址并保存");
+            // 【日志】记录校验失败
+            LogManager.w(this, LogManager.SUB_COMMAND, "启动监控失败: 未填写网页地址");
             return;
         }
 
         if(!useLocal && !useWeb) {
             status.setText("请至少勾选一种监控来源");
+            // 【日志】记录校验失败
+            LogManager.w(this, LogManager.SUB_COMMAND, "启动监控失败: 未勾选任何监控来源");
             return;
         }
 
         if(activeVoiceName==null || activeVoiceName.isEmpty()) {
             status.setText("请先选择本机离线或联网语音包，并点击对应的确定按钮");
+            // 【日志】记录校验失败
+            LogManager.w(this, LogManager.SUB_COMMAND, "启动监控失败: 未选择并确认语音包");
             return;
         }
 
@@ -833,7 +909,10 @@ public class VoiceReader extends Activity {
                     3,
                     Integer.parseInt(interval.getText().toString().trim())
             );
-        } catch(Exception ignored) {}
+        } catch(Exception ignored) {
+            // 【日志】记录格式解析错误，虽不影响运行但记录一下
+            LogManager.w(this, LogManager.SUB_TIMER, "监控间隔解析失败，已使用默认 10 秒");
+        }
 
         Intent i=new Intent(this,ReaderService.class);
 
@@ -853,6 +932,11 @@ public class VoiceReader extends Activity {
         startReaderService(i);
 
         status.setText("后台监控已启动："+sec+"秒");
+        
+        // 【日志】核心指令下发成功
+        LogManager.i(this, LogManager.SUB_COMMAND, "启动后台监控指令. 本机监控:" + useLocal + " 网页监控:" + useWeb);
+        // 【日志】定时器配置
+        LogManager.i(this, LogManager.SUB_TIMER, "自动监控定时器已启动，间隔: " + sec + "秒");
     }
 
     void command(String action) {
@@ -862,6 +946,11 @@ public class VoiceReader extends Activity {
         i.setAction(action);
 
         startService(i);
+        
+        // 【日志】记录暂停/继续/停止指令
+        String actionName = action.equals(ReaderService.PAUSE) ? "暂停" : 
+                           (action.equals(ReaderService.RESUME) ? "继续" : "停止");
+        LogManager.i(this, LogManager.SUB_COMMAND, "下发控制指令: " + actionName + "朗读");
     }
 
     void requestNotificationPermission() {
@@ -877,6 +966,8 @@ public class VoiceReader extends Activity {
                     },
                     REQ_NOTIFY
             );
+            // 【日志】记录权限请求
+            LogManager.i(this, LogManager.SUB_APP, "请求发送通知栏权限");
         }
     }
 
@@ -888,9 +979,7 @@ public class VoiceReader extends Activity {
             tts.shutdown();
         }
 
-
         super.onDestroy();
     }
-                  }
-
+}
 
