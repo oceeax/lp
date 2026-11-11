@@ -263,7 +263,7 @@ public class VoiceReader extends Activity {
 
     void openTtsSettings() {
         try {
-            startActivity(new Intent(Settings.ACTION_TTS_SETTINGS));
+            Activity(new Intent("com.android.settings.TTS_SETTINGS"));
         } catch(Exception e) {
             status.setText("无法打开系统 TTS 设置，请到系统设置中搜索‘文字转语音’");
         }
