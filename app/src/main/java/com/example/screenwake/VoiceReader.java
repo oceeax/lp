@@ -6,6 +6,7 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.media.AudioAttributes;
+import com.example.screenwake.ReaderService;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
 import android.view.*;
