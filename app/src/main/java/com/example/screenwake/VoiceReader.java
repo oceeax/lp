@@ -1,5 +1,5 @@
 package com.example.voicereader;
-
+import androidx.appcompat.app.AppCompatActivity;
 import android.app.*;
 import android.os.*;
 import android.content.*;
@@ -15,11 +15,11 @@ import android.provider.DocumentsContract;
 import android.provider.OpenableColumns;
 import android.provider.Settings;
 import android.text.InputType;
-
+import android.app.Activity;
 
 import java.io.*;
 import java.util.*;
-public class VoiceReader extends AppCompatActivity {
+public class VoiceReader extends Activity {
     static final int PICK_TREE=101, PICK_FILE=102, REQ_NOTIFY=103;
     TextView status,selected,engineInfo,gainLabel;
     EditText interval,webUrl;
