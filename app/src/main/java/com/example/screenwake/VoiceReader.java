@@ -19,11 +19,8 @@ import android.text.InputType;
 
 import java.io.*;
 import java.util.*;
-
-public class MainActivity extends Activity {
-
+public class VoiceReader extends AppCompatActivity {
     static final int PICK_TREE=101, PICK_FILE=102, REQ_NOTIFY=103;
-
     TextView status,selected,engineInfo,gainLabel;
     EditText interval,webUrl;
     CheckBox monitorLocalBox,monitorWebBox;
