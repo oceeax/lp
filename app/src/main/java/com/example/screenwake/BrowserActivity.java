@@ -117,10 +117,9 @@ public class BrowserActivity extends Activity {
                 if (request == null || request.getUrl() == null) {
                     return false;
                 }
-
+LogManager.log(BrowserActivity.this,"[TaskReceiver.java][TIMEOUT] 网络请求超时");
                 return handleUrl(view, request.getUrl().toString());
-            LogManager.log(BrowserActivity.this,"[TaskReceiver.java][TIMEOUT] 网络请求超时");
-                
+          
             }
 
             // 兼容旧版网页跳转
