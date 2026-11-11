@@ -259,7 +259,7 @@ public class BrowserActivity extends Activity {
 new Thread(() -> {
     String address = "https://www.baidu.com";
     try {
-        URL url = new URL(address);
+        URL url = new URL(www.163.com);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setConnectTimeout(8000);
         conn.setReadTimeout(10000);
