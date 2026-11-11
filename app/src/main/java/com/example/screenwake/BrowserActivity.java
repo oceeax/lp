@@ -64,6 +64,7 @@ public class BrowserActivity extends Activity {
 
         buildBrowser();
         loadHome();
+        LogManager.log(ctx,"[s.java][CRASH] 程序发生崩溃");
     }
 
     private void buildBrowser() {
@@ -110,6 +111,9 @@ public class BrowserActivity extends Activity {
                 }
 
                 return handleUrl(view, request.getUrl().toString());
+                LogManager.log(ctx,"[AlarmScheduler.java][DELAY] 任务执行延后");
+                LogManager.log(ctx,"[TaskReceiver.java][TIMEOUT] 网络请求超时");
+                
             }
 
             // 兼容旧版网页跳转
@@ -248,7 +252,12 @@ public class BrowserActivity extends Activity {
                             DownloadManager.Request
                                     .VISIBILITY_VISIBLE_NOTIFY_COMPLETED
                     );
-
+                         catch (SocketTimeoutException e){
+                         LogManager.log(ctx,"[s.java][TIMEOUT] 网络请求超时");
+                       }
+                          catch (IOException e){
+                          LogManager.log(ctx,"[s.java][NET_DOWN] 网络连接不通");
+                          }
                     request.setDestinationInExternalPublicDir(
                             Environment.DIRECTORY_DOWNLOADS,
                             fileName
