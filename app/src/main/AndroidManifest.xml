@@ -2,11 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
-    <!-- 网络 -->
-    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-
-    <!-- Wi‑Fi -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 
     <!-- 蓝牙 -->
@@ -27,11 +23,17 @@
     <!-- 通知 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
 
-    <!-- 其他权限 -->
+    <!-- 悬浮窗、修改系统设置、电池白名单 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
 
-    <!-- ============新增：<=Android12读写公共存储，Android13+不需要================ -->
+    <!-- 媒体读取（图片/视频/音频） -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO"/>
+
+    <!-- 低版本存储权限 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
 
@@ -40,27 +42,39 @@
         android:label="接收器"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="true">
+
+        <!-- FileProvider 图片视频本地文件访问 -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- 原有全部Activity -->
         <activity
-        android:name=".SettingsPage"
-        android:exported="false" />
+            android:name=".SettingsPage"
+            android:exported="false" />
         <activity
-          android:name=".MultiWsActivity"
-          android:exported="false"
-          android:label="五路接收" />
+            android:name=".MultiWsActivity"
+            android:exported="false"
+            android:label="五路接收" />
         <activity android:name=".LogManager" android:exported="false" />
         <activity android:name=".WebMonitor" android:exported="false" />
         <activity android:name=".AlarmScheduler" android:exported="false" />
         <activity android:name=".DeviceUploader" android:exported="false" />
+
         <!-- 主界面 -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-
         </activity>
 
         <!-- 浏览器 -->
@@ -69,69 +83,60 @@
             android:exported="false"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"/>
 
-        <!-- 设置 -->
+        <!-- 新增：图片查看、视频播放页面 -->
         <activity
-            android:name=".SettingsPage"
+            android:name=".ImageShowActivity"
             android:exported="false"/>
-        <!-- 设置 -->
         <activity
-            android:name=".WebMonitor"
-            android:exported="false"/>
-            <!-- 设置 -->
-        <activity
-            android:name=".LogManager"
-            android:exported="false"/>
-            <!-- 设置 -->
-        <activity
-            android:name=".AlarmScheduler"
-            android:exported="false"/>
-            <!-- 设置 -->
-        <activity
-            android:name=".SettingsPage"
-            android:exported="false"/>
-        <!-- 亮屏图案 -->
-        <activity
-            android:name=".DeviceUploader"
+            android:name=".VideoPlayActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize"/>
+
+        <!-- 无障碍服务（远程点击本App按钮） -->
+        <service
+            android:name=".AppClickAccessService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice.AccessibilityService"
+                android:resource="@xml/accessibility_config" />
+        </service>
+
+        <!-- 悬浮窗服务 -->
+        <service
+            android:name=".FloatWindowService"
             android:exported="false"/>
 
-        <!-- 开机接收器 -->
+        <!-- 原有广播接收器 -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
-
         </receiver>
-
-        <!-- 定时任务接收器 -->
         <receiver
             android:name=".TaskReceiver"
             android:enabled="true"
             android:exported="false">
-
             <intent-filter>
                 <action android:name="com.example.screenwake.ACTION_TIMER"/>
             </intent-filter>
-
         </receiver>
 
-        <!-- 原有亮屏服务 -->
+        <!-- 原有服务 全部保留 -->
         <service
             android:name=".ScreenWakeService"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="specialUse">
-
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Brief post‑boot screen wake attempt and visible five‑minute display"/>
-
         </service>
-
-        <!-- 新增设备任务服务 -->
         <service
             android:name=".CycleService"
             android:enabled="true"
@@ -139,7 +144,7 @@
             android:foregroundServiceType="dataSync"/>
 
     </application>
-
 </manifest>
+
 
 
