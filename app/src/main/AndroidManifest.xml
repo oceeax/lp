@@ -115,12 +115,23 @@
             android:exported="false"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
 
-        <!-- 图片查看、视频播放页面 -->
+        <!-- 定时-->
         <activity
-            android:name=".ImageShowActivity"
+            android:name=".AlarmSchedulerActivity"
+            android:exported="false" />
+        <!-- 日志  -->
+        <activity
+            android:name=".LogManagerActivity"
             android:exported="false" />
         <activity
-            android:name=".VideoPlayActivity"
+            android:name=".BootReceiver"
+            android:exported="false" />
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize" />
+        <activity
+            android:name=".VideoPlay"
             android:exported="false"
             android:configChanges="orientation|screenSize" />
 
