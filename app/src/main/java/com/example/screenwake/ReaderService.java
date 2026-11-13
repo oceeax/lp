@@ -9,6 +9,7 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.Voice;
 import android.database.Cursor;
 import android.text.Html;
+
 import android.text.Spanned;
 
 import org.json.JSONObject;
@@ -26,6 +27,8 @@ public class ReaderService extends Service implements TextToSpeech.OnInitListene
     private static final String CHANNEL="reader";
     private TextToSpeech tts;
     private Uri tree;
+    public static final String SPEAK="reader.SPEAK";
+    public static final String CONFIG="reader.CONFIG";
     private String webUrl="";
     private boolean monitorLocal=true, monitorWeb=false;
     private int interval=10;
